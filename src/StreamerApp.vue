@@ -2,17 +2,18 @@
   <div id="streamerApp">
     <!-- <img alt="Vue logo" src="./assets/img/icon.png">
     <HelloWorld msg="Welcome to Your Vue.js Ext App"/> -->
-    <h2>Streamer side</h2>
+    <!-- <h2>Streamer side</h2> -->
+    <streamer-home></streamer-home>
   </div>
 </template>
 
 <script>
-import s_hello from './components/s_hello.vue'
+import streamerHome from './views/streamerHome.vue'
 
 export default {
   name: 'streamerApp',
   components: {
-    s_hello
+    streamerHome
   }
 }
 </script>

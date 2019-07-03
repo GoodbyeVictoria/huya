@@ -1,9 +1,12 @@
 <template>
-    <div class="container">vvvv</div>
+    <div calss="home">
+        <board></board>
+    </div>
 </template>
 <script>
 import board from './../components/board'
 export default {
+    name:'home',
     components:{
         board
     }
@@ -14,7 +17,7 @@ export default {
 
 body{
     @include flexCenter;
-    background-color: #FF4552;
+    background-color:#FFEDAC;
 }
 
 </style>
