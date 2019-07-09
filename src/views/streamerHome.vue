@@ -1,129 +1,79 @@
 <template>
     <div class="streamerHome">
-        <template>
-            <a-form :form="form" @submit="handleSubmit">
-                <a-form-item label="请输入关键字" :label-col="{ span: 2 }" :wrapper-col="{ span: 5 }">
-                    <a-input
-                        v-decorator="[
-                        'keyWord',
-                        {rules: [{ required: true, message: '请输入关键字！' }]}
-                        ]"
-                    />
-                </a-form-item>
-                <a-form-item :wrapper-col="{ span: 5, offset: 1 }">
-                    <a-button type="primary" html-type="submit">
-                        Submit
-                    </a-button>
-                </a-form-item>
-            </a-form>
-            <a-button type="primary" @click="startListen">开始监听</a-button>
-            <a-button type="primary" @click="stopListen">停止监听</a-button>
-        </template>
-        <div class="zone" id="zone" v-show=show>
-            {{info}}
-        </div>
+        <transition name="fade" mode="out-in">
+            <div v-if="isEmpty" class="intro">
+                <div key="p1">欢迎使用弹幕tools~</div>
+                <div key="p2">您可以通过创建模板，添加您想监听的弹幕关键字，填入你您回应的信息，</div>
+                <div key="p3">弹幕tools就可以帮助您在直播界面回应弹幕哦~</div>
+                <div key="p4">快来创建第一个模板来体验吧！</div>
+                <div>创建模板</div>
+            </div>
+            <!-- 是能给个loading界面了 -->
+            <div v-else>
+                把storage里面的取出来
+            </div>
+        </transition>
+        
+        <div @click="change()" :style="{cursor:pointer}">click</div>
     </div>
 </template>
 <script>
-import { setInterval, clearInterval } from 'timers';
 
 export default {
     data(){
         return {
-            formLayout:'horizontal',
-            form:this.$form.createForm(this),
-            info:'88法穿',
-            intervalId:'',
-            show:false
+            isEmpty:''
+        }
+    },
+    computed:{
+        checkEmpty(){
+            setTimeout(() => {
+                return true
+            }, 1000);
         }
     },
     methods:{
-        handleSubmit(e){
-            e.preventDefault()
-            this.form.validateFields((err,values)=>{
-                if(!err){
-                    console.log("values: "+JSON.stringify(values))
-                    //可能多个 后面处理
-                    //最多设置5个
-                    hyExt.storage.setItem('01', values.keyWord).then(() => {
-                        hyExt.logger.info('设置成功', values.keyWord)
-                    }).catch(err => {
-                        hyExt.logger.warn('设置失败', err)
-                    })
+        change(){
+            // this.isEmpty=!this.isEmpty
+            console.log("2323");
+            
+        }
+    },
+    created(){
+        hyExt.storage.getKeys().then(keys => {
+                hyExt.logger.info('获取成功', keys)
+                if(keys.length===0){
+                    this.isEmpty=true
+                }else{
+                    this.isEmpty=false
                 }
-            })
-        },
-        startListen(e){
-            let keyWord=""
-            hyExt.storage.getItem('01').then(value => {
-                keyWord=value
-                hyExt.logger.info('获取成功', keyWord)
-                this.listenBarrage(keyWord)
             }).catch(err => {
                 hyExt.logger.warn('获取失败', err)
             })
-            //监听弹幕
-            //其实还要做判断keyword是不是空
-            //还可以根据弹幕禁言 可能只是警告
-            //有查房 可以提醒
-            //就叫弹幕助手
-            
-            // hyExt.context.onBarrageChange({
-            //     content: keyWord
-            // }, barrageInfo => {
-            //     hyExt.logger.info('有新弹幕', barrageInfo)
-            // }).then((barrageInfo) => {
-            //     hyExt.logger.info('监听成功')
-            //     if(barrageInfo){
-            //         console.log(barrageInfo.sendNick)
-            //     }
-            //     // hyExt.stream.addZone(document.getElementById('zone')).then(() => {
-            //     //     hyExt.logger.info('创建白板成功')
-            //     // }).catch(err => {
-            //     //     hyExt.logger.warn('创建白板失败', err)
-            //     // })
-            // }).catch(err => {
-            //     hyExt.logger.warn('监听失败', err)
-            // })
-            //创建白板
-            // hyExt.stream.addZone(document.getElementById('zone')).then(() => {
-            //     hyExt.logger.info('创建白板成功')
-            // }).catch(err => {
-            //     hyExt.logger.warn('创建白板失败', err)
-            // })
-            //删除白板
-        },
-        stopListen(){
-            console.log(this.intervalId)
-            // clearInterval(this.intervalId)
-            hyExt.context.offBarrageChange()
-        },
-        listenBarrage(value){
-            console.log(111)
-            hyExt.context.onBarrageChange({
-                content:"mingwen"
-            }, barrageInfo => {
-                console.log(222)
-                console.log(barrageInfo)
-                hyExt.logger.info('有新弹幕', barrageInfo.sendNick)
-            }).then(() => {
-                hyExt.logger.info('监听成功')
-            }).catch(err => {
-                hyExt.logger.warn('监听失败', err)
-            })
-        }
+    },
+    methods:{
+        
     }
 }
 </script>
-<style lang="scss" scoped>
- .zone{
-     display:none;
-     position:fixed;
-     width:50%;
-     height:50%;
-     border:2px solid rosybrown;
-     text-align: center;
- }
+<style lang="scss">
+@import "./../assets/scss/partial/flex";
+
+body{
+    @include flexCenter;
+    background-color:#FFEDAC;
+}
+.intro{
+    transition:all 1.0s ease;
+    // display:none;
+}
+.fade-enter,.fade-leave-to{
+    opacity: 0;
+    transform:translateX(-10px)
+}
+.fade-leave-active {
+  transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+}
 </style>
 
 

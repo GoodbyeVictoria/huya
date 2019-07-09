@@ -18,7 +18,7 @@ export default {
 }
 </script>
 
-<style lang=style lang="scss" scoped>
+<style lang="scss">
 @import "./assets/scss/common.scss";
 #streamerApp {
   font-family: 'Avenir', Helvetica, Arial, sans-serif;
@@ -27,6 +27,9 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+body{
+  background-color:#FFEDAC;
 }
 </style>
 
