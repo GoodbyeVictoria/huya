@@ -104,8 +104,9 @@ export default {
                 content:"mingwen"
             }, barrageInfo => {
                 console.log(222)
-                // hyExt.logger.info('有新弹幕', barrageInfo.sendNick)
-            }).then((barrageInfo) => {
+                console.log(barrageInfo)
+                hyExt.logger.info('有新弹幕', barrageInfo.sendNick)
+            }).then(() => {
                 hyExt.logger.info('监听成功')
             }).catch(err => {
                 hyExt.logger.warn('监听失败', err)
