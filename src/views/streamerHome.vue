@@ -2,7 +2,7 @@
     <div class="streamerHome">
         <template>
             <a-form :form="form" @submit="handleSubmit">
-                <a-form-item label="请输入关键字" :label-col="{ span: 2 }" :wrapper-col="{ span: 10 }">
+                <a-form-item label="请输入关键字" :label-col="{ span: 2 }" :wrapper-col="{ span: 5 }">
                     <a-input
                         v-decorator="[
                         'keyWord',
@@ -10,7 +10,7 @@
                         ]"
                     />
                 </a-form-item>
-                <a-form-item :wrapper-col="{ span: 10, offset: 1 }">
+                <a-form-item :wrapper-col="{ span: 5, offset: 1 }">
                     <a-button type="primary" html-type="submit">
                         Submit
                     </a-button>
@@ -19,18 +19,22 @@
             <a-button type="primary" @click="startListen">开始监听</a-button>
             <a-button type="primary" @click="stopListen">停止监听</a-button>
         </template>
-        <div class="zone" id="zone">
+        <div class="zone" id="zone" v-show=show>
             {{info}}
         </div>
     </div>
 </template>
 <script>
+import { setInterval, clearInterval } from 'timers';
+
 export default {
     data(){
         return {
             formLayout:'horizontal',
             form:this.$form.createForm(this),
             info:'88法穿',
+            intervalId:'',
+            show:false
         }
     },
     methods:{
@@ -53,7 +57,8 @@ export default {
             let keyWord=""
             hyExt.storage.getItem('01').then(value => {
                 keyWord=value
-                hyExt.logger.info('获取成功', value)
+                hyExt.logger.info('获取成功', keyWord)
+                this.listenBarrage(keyWord)
             }).catch(err => {
                 hyExt.logger.warn('获取失败', err)
             })
@@ -62,25 +67,49 @@ export default {
             //还可以根据弹幕禁言 可能只是警告
             //有查房 可以提醒
             //就叫弹幕助手
+            
+            // hyExt.context.onBarrageChange({
+            //     content: keyWord
+            // }, barrageInfo => {
+            //     hyExt.logger.info('有新弹幕', barrageInfo)
+            // }).then((barrageInfo) => {
+            //     hyExt.logger.info('监听成功')
+            //     if(barrageInfo){
+            //         console.log(barrageInfo.sendNick)
+            //     }
+            //     // hyExt.stream.addZone(document.getElementById('zone')).then(() => {
+            //     //     hyExt.logger.info('创建白板成功')
+            //     // }).catch(err => {
+            //     //     hyExt.logger.warn('创建白板失败', err)
+            //     // })
+            // }).catch(err => {
+            //     hyExt.logger.warn('监听失败', err)
+            // })
+            //创建白板
+            // hyExt.stream.addZone(document.getElementById('zone')).then(() => {
+            //     hyExt.logger.info('创建白板成功')
+            // }).catch(err => {
+            //     hyExt.logger.warn('创建白板失败', err)
+            // })
+            //删除白板
+        },
+        stopListen(){
+            console.log(this.intervalId)
+            // clearInterval(this.intervalId)
+            hyExt.context.offBarrageChange()
+        },
+        listenBarrage(value){
+            console.log(111)
             hyExt.context.onBarrageChange({
-                content: keyWord
+                content:"mingwen"
             }, barrageInfo => {
-                hyExt.logger.info('有新弹幕', barrageInfo)
-                hyExt.stream.addZone(document.getElementById('zone')).then(() => {
-                    hyExt.logger.info('创建白板成功')
-                }).catch(err => {
-                    hyExt.logger.warn('创建白板失败', err)
-                })
-            }).then(() => {
+                console.log(222)
+                // hyExt.logger.info('有新弹幕', barrageInfo.sendNick)
+            }).then((barrageInfo) => {
                 hyExt.logger.info('监听成功')
             }).catch(err => {
                 hyExt.logger.warn('监听失败', err)
             })
-            //创建白板
-            //删除白板
-        },
-        stopListen(){
-            hyExt.context.offBarrageChange()
         }
     }
 }

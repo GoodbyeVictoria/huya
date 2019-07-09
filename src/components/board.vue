@@ -11,6 +11,21 @@ export default {
     // components:{
     //     Input
     // }
+    created(){
+        console.log(111)
+        hyExt.context.onBarrageChange({
+            content:"nini"
+        }, barrageInfo => {
+            console.log(222)
+            console.log(barrageInfo)
+            hyExt.logger.info('有新弹幕', barrageInfo)
+        }).then((barrageInfo) => {
+            hyExt.logger.info('监听成功')
+        }).catch(err => {
+            hyExt.logger.warn('监听失败', err)
+        })
+    }
+    
 }
 </script>
 
