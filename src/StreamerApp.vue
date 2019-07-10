@@ -20,16 +20,17 @@ export default {
 
 <style lang="scss">
 @import "./assets/scss/common.scss";
+
+
+
 #streamerApp {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  font-family: 'Chinese Quote';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
-}
-body{
-  background-color:#FFEDAC;
+  width:100%;
+  height:100%;
 }
 </style>
 
