@@ -1,19 +1,17 @@
 <template>
     <div class="streamerHome">
     <!-- <div @click="show=!show" style="{cursor:pointer;border:1px solid black;position:relative;}">click</div> -->
-        <div class="intro-wrapper">
+        <div v-if="!isEmpty">
+            <div class="button" @click="goToList">查看模板列表</div>
+        </div>
+        <div v-else class="intro-wrapper">
             <transition-group name="fade-ani" tag="div" enter-active-class="animated fadeInDown"  leave-active-class="animated fadeOutRight" @after-enter="addAnim">
                 <div v-for="ele in intro_data" :key="ele.id" :class="[introType,anim]" :style="delay[ele.id]">
                     {{ele.msg}}
                 </div>
-                
-                <!-- 是loading界面 -->
-                <!-- <div v-else>
-                    把storage里面的取出来
-                </div> -->
             </transition-group>
         </div>
-        <div class="button" @click="jumpToMain">创 建 模 板</div>
+        <div class="button" @click="goToAdd">创 建 模 板</div>
     </div>
 </template>
 
@@ -76,8 +74,11 @@ export default {
             el.style.animationDelay="0s"
             el.style.animation="upDown 3s infinite"
         },
-        jumpToMain(){
-            this.$router.push('/main')
+        goToAdd(){
+            this.$router.push('/add')
+        },
+        goToList(){
+            this.$router.push('/list')
         },
     },
     mounted(){
@@ -155,6 +156,8 @@ export default {
     cursor:pointer;
     transform:scale(1.0);
     transition:all 1s;
+    margin-bottom: 25px;
+    margin-top: 25px;
 }
 .button:hover{
     transform:scale(1.07);

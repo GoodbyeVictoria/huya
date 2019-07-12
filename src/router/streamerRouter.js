@@ -13,13 +13,13 @@ const routes=[
         component:streamerHome
     },
     {
-        path:'/main',
-        name:'main',
+        path:'/add',
+        name:'add',
         component:streamerAdd
     },
     {
-        path:'/templates',
-        name:'templates',
+        path:'/list',
+        name:'list',
         component:streamerList
     },
 ]

@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import StreamerApp from './StreamerApp.vue'
 import './lib/rem.js'
-import {Form,Input,Button,Icon,Alert} from 'ant-design-vue'
+import {Form,Input,Button,Icon,Alert,message,Row,Col,Switch} from 'ant-design-vue'
 import 'ant-design-vue/dist/antd.css'
 import streamerStore from './store/streamerStore'
 import streameRouter from './router/streamerRouter'
@@ -12,6 +12,16 @@ Vue.use(Button)
 Vue.use(Form)
 Vue.use(Icon)
 Vue.use(Alert)
+Vue.use(Row)
+Vue.use(Col)
+Vue.use(Switch)
+message.config({
+  top: `52px`,
+  duration: 2,
+  maxCount: 3,
+});
+Vue.prototype.$message = message;
+
 
 new Vue({
   store:streamerStore,

@@ -1,120 +1,114 @@
 <template>
     <div class="streamerMain">
-        <div class="top"  @click="goBack">
-            <a-icon type="left-circle" theme="twoTone" twoToneColor="#FFA591" />返回主页
-        </div>
-        <div v-if="title_valid">
-            <a-alert message="Warning" type="warning" showIcon/>
-        </div>
-        <a-form :form="form" @submit="handleSubmit">
-            <a-form-item 
-                label="请输入模板标题" 
-                :label-col="{ span: 4 }" 
-                :wrapper-col="{ span: 8 }"
-                :help="tips"
-                >
-                <a-input
-                    placeholder="铭文1"
-                    v-decorator="[
-                    'title',
-                    {rules: [{ required: true, message: '请输入模板标题！' }]}
-                    ]"
-                />
-            </a-form-item>
-            <a-form-item label="请输入关键字" :label-col="{ span: 4 }" :wrapper-col="{ span: 8 }">
-                <a-input
-                    placeholder="铭文"
-                    v-decorator="[
-                    'keyWord',
-                    {rules: [{ required: true, message: '请输入关键字！' }]}
-                    ]"
-                />
-            </a-form-item>
-            <a-form-item label="请输入模板内容" :label-col="{ span: 4 }" :wrapper-col="{ span: 8 }">
-                <a-textarea 
-                    placeholder="88法穿" 
-                    :autosize="{ minRows: 2, maxRows: 6 }" 
-                    v-decorator="[
-                    'template',
-                    {rules: [{ required: true, message: '请输入模板内容！' }]}
-                    ]"
-                />
-            </a-form-item>
-            <a-form-item>
-                <a-button type="primary" html-type="submit">
-                    提交
-                </a-button>
-            </a-form-item>
-        </a-form>
-        <!-- <a-button ghost @click="startListen">开始监听</a-button>
-        <a-button type="primary" @click="stopListen">停止监听</a-button> -->
-        
-        <div class="zone" id="zone" v-show=show>
-            {{info}}
+        <backHome></backHome>
+        <div class="form-wrapper">
+            <a-form :form="form" @submit="handleSubmit" class="form">
+                <a-form-item 
+                    label="请输入模板标题" 
+                    :label-col="{ span: 4 }" 
+                    :wrapper-col="{ span: 8 }"
+                    :help="tips"
+                    >
+                    <a-input
+                        placeholder="铭文1"
+                        v-decorator="[
+                        'title',
+                        {rules: [{ required: true, message: '请输入模板标题' }]}
+                        ]"
+                    />
+                </a-form-item>
+                <a-form-item label="请输入关键字" :label-col="{ span: 4 }" :wrapper-col="{ span: 8 }">
+                    <a-input
+                        placeholder="铭文"
+                        v-decorator="[
+                        'keyWord',
+                        {rules: [{ required: true, message: '请输入关键字' }]}
+                        ]"
+                    />
+                </a-form-item>
+                <a-form-item label="请输入模板内容" :label-col="{ span: 4 }" :wrapper-col="{ span: 8 }">
+                    <a-textarea 
+                        placeholder="88法穿" 
+                        :autosize="{ minRows: 2, maxRows: 6 }" 
+                        v-decorator="[
+                        'template',
+                        {rules: [{ required: true, message: '请输入模板内容' }]}
+                        ]"
+                    />
+                </a-form-item>
+                <a-form-item>
+                    <a-button type="primary" html-type="submit">
+                        提交
+                    </a-button>
+                </a-form-item>
+            </a-form>
         </div>
     </div>
 </template>
 
 <script>
-
+import backHome from './../components/backHome'
 
 export default {
     data(){
         return {
             formLayout:'horizontal',
             form:this.$form.createForm(this),
-            info:'88法穿',
-            intervalId:'',
-            show:false,
             tips:'模板标题必须唯一',
-            title_valid:true
+            title_valid:true,
+            is_finish:false,
         }
     },
-    computed:{
-        
+    components:{
+        backHome
     },
     methods:{
         goBack(){
             this.$router.push('/')
         },
-
-        validTitle(title){
-            let result=false
+        validTitle(title,callBack){
             hyExt.storage.getKeys().then(keys => {
                 hyExt.logger.info('获取成功', keys)
-                keys.forEach(ele => {
-                    if(ele===title){
-                        this.tips="标题名称重复"
-                        result= false
-                    }
+                this.title_valid=keys.every(ele=>{
+                    return ele!==title
                 })
-                result=true
+                callBack()
+                
             }).catch(err => {
                 hyExt.logger.warn('获取失败', err)
             })
-            return result
         },
         handleSubmit(e){
             e.preventDefault()
-            let that=this
+            // let value=this.form.getFieldValue('title')
             this.form.validateFields((err,values)=>{
-                that.titile_valid=this.validTitle(values.title)
-                //验证样式
-                console.log(that.titile_valid)
-                if(!this.title_valid){
-                    console.log(that.titile_valid)
-                }else if(!err&&that.titile_valid){
-                    console.log("values: "+JSON.stringify(values))
-                    
-                    //可能多个 后面处理
-                    //最多设置5个
-                    hyExt.storage.setItem(values.title, values.keyWord).then(() => {
-                        hyExt.logger.info('设置成功', values.keyWord)
-                        that.$router.push('/templates')
+                this.$message.loading('loading').then(()=>{
+                    hyExt.storage.getKeys().then(keys => {
+                        hyExt.logger.info('获取成功', keys)
+                        this.title_valid=keys.every(ele=>{
+                            return ele!==values.title
+                        })
+                        if(!this.title_valid){
+                            this.$message.error('标题名称重复');
+                        }else if(this.title_valid&&!err){
+                            let value=JSON.stringify(values)
+                            console.log("values: "+value)
+                            //可能多个 后面处理
+                            //最多设置5个
+                            hyExt.storage.setItem(values.title, value).then(() => {
+                                hyExt.logger.info('设置成功', values.keyWord)
+                                this.is_finish=true
+                                this.$message.success('添加成功', 1).then(this.goBack)
+                            }).catch(err => {
+                                hyExt.logger.warn('设置失败', err)
+                            })
+                        }
+                                
                     }).catch(err => {
-                        hyExt.logger.warn('设置失败', err)
+                        hyExt.logger.warn('获取失败', err)
                     })
-                }
+                })
+                //验证样式
             })
         },
         startListen(e){
@@ -195,16 +189,13 @@ export default {
     width: 100%;
     height: 100%;
  }
- .top{
-    font-size: 16px;
-    position: fixed;
-    top: 9px;
-    left: 5px;
-    cursor:pointer;
- }
 .anticon{
     margin-right:3px;
     font-size:20px;
+ }
+ .alert{
+     position:fixed;
+     top:52px;
  }
 </style>
 
