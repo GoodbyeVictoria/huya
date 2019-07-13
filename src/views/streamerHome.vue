@@ -1,17 +1,22 @@
 <template>
     <div class="streamerHome">
-    <!-- <div @click="show=!show" style="{cursor:pointer;border:1px solid black;position:relative;}">click</div> -->
-        <div v-if="!isEmpty">
-            <div class="button" @click="goToList">查看模板列表</div>
-        </div>
-        <div v-else class="intro-wrapper">
+        <transition name="button-ani" enter-active-class="animatied zoomIn">
+            <div v-if="!isEmpty">
+                <div class="button" @click="goToList">查看模板列表</div>
+            </div>
+        </transition>
+        <div v-if="isEmpty" class="intro-wrapper">
             <transition-group name="fade-ani" tag="div" enter-active-class="animated fadeInDown"  leave-active-class="animated fadeOutRight" @after-enter="addAnim">
                 <div v-for="ele in intro_data" :key="ele.id" :class="[introType,anim]" :style="delay[ele.id]">
                     {{ele.msg}}
                 </div>
             </transition-group>
         </div>
-        <div class="button" @click="goToAdd">创 建 模 板</div>
+        <transition name="button-ani" enter-active-class="animatied zoomIn">
+            <div v-show="show">
+                <div class="button" @click="goToAdd">创 建 模 板</div>
+            </div>
+        </transition>
     </div>
 </template>
 
@@ -20,7 +25,7 @@
 export default {
     data(){
         return {
-            isEmpty:'',
+            isEmpty:true,
             show:false,
             introType:'',
             anim:'',
@@ -66,10 +71,6 @@ export default {
         
     },
     methods:{
-        change(){
-            this.isEmpty=!this.isEmpty
-            console.log("2323");
-        },
         addAnim(el,done){
             el.style.animationDelay="0s"
             el.style.animation="upDown 3s infinite"
@@ -85,9 +86,11 @@ export default {
         hyExt.storage.getKeys().then(keys => {
                 hyExt.logger.info('获取成功', keys)
                 if(keys.length===0){
+                    this.show=true
                     this.intro_data=this.intro_msg
                     this.introType='intro'
                 }else{
+                    this.show=true
                     this.isEmpty=false
                     this.introType='templates'
                 }
@@ -104,21 +107,11 @@ export default {
 .streamerHome{
     @include flexCenter;
     @include flex-direction(column);
-    // @include justify-content(space-around);
     font-family: Microsoft YaHei;
     width: 100%;
     height: 100%;
-    // background-image: linear-gradient(315deg, #FF766C 0%, #5F56E8 100%);
-    // -webkit-animation: hue 60s infinite linear;
 }
-// @keyframes hue {
-//     from {
-//         -webkit-filter: hue-rotate(0deg);
-//     }
-//     to {
-//         -webkit-filter: hue-rotate(360deg);
-//     }
-// }
+
 @keyframes twink {
     50%{
         box-shadow:0px 1px 13px 7px #000000a3;
@@ -137,7 +130,6 @@ export default {
 .intro-wrapper{
     line-height: 2.5;
     font-size: 17px;
-    // font-weight: 600;
     height: 246px;
     margin-bottom: 50px;
     text-shadow: 1px 0 1px black;
@@ -163,10 +155,6 @@ export default {
     transform:scale(1.07);
     transition:all 1s;
 }
-// .intro{
-//     transition:all 1.0s ease;
-//     // display:none;
-// }
 
 </style>
 

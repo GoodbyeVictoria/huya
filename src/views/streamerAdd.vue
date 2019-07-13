@@ -37,7 +37,7 @@
                     />
                 </a-form-item>
                 <a-form-item>
-                    <a-button type="primary" html-type="submit">
+                    <a-button type="primary" :disabled="disabled" html-type="submit">
                         提交
                     </a-button>
                 </a-form-item>
@@ -57,6 +57,7 @@ export default {
             tips:'模板标题必须唯一',
             title_valid:true,
             is_finish:false,
+            disabled:false,
         }
     },
     components:{
@@ -80,96 +81,41 @@ export default {
         },
         handleSubmit(e){
             e.preventDefault()
+            this.disabled=true
             // let value=this.form.getFieldValue('title')
             this.form.validateFields((err,values)=>{
-                this.$message.loading('loading').then(()=>{
-                    hyExt.storage.getKeys().then(keys => {
-                        hyExt.logger.info('获取成功', keys)
-                        this.title_valid=keys.every(ele=>{
-                            return ele!==values.title
-                        })
-                        if(!this.title_valid){
-                            this.$message.error('标题名称重复');
-                        }else if(this.title_valid&&!err){
-                            let value=JSON.stringify(values)
-                            console.log("values: "+value)
-                            //可能多个 后面处理
-                            //最多设置5个
-                            hyExt.storage.setItem(values.title, value).then(() => {
-                                hyExt.logger.info('设置成功', values.keyWord)
-                                this.is_finish=true
-                                this.$message.success('添加成功', 1).then(this.goBack)
-                            }).catch(err => {
-                                hyExt.logger.warn('设置失败', err)
+                if(err){
+                    this.disabled=false
+                }else{
+                    this.$message.loading('loading').then(()=>{
+                        hyExt.storage.getKeys().then(keys => {
+                            hyExt.logger.info('获取成功', keys)
+                            this.title_valid=keys.every(ele=>{
+                                return ele!==values.title
                             })
-                        }
-                                
-                    }).catch(err => {
-                        hyExt.logger.warn('获取失败', err)
+                            if(!this.title_valid){
+                                this.$message.error('标题名称重复');
+                                this.disabled=false
+                            }else if(this.title_valid&&!err){
+                                let value=JSON.stringify(values)
+                                hyExt.storage.setItem(values.title, value).then(() => {
+                                    hyExt.logger.info('设置成功', values.keyWord)
+                                    this.is_finish=true
+                                    this.disabled=false
+                                    this.$message.success('添加成功', 1).then(this.goBack)
+                                }).catch(err => {
+                                    hyExt.logger.warn('设置失败', err)
+                                })
+                            }
+                                    
+                        }).catch(err => {
+                            hyExt.logger.warn('获取失败', err)
+                        })
                     })
-                })
+                }
                 //验证样式
             })
         },
-        startListen(e){
-            let keyWord=""
-            hyExt.storage.getItem('01').then(value => {
-                keyWord=value
-                hyExt.logger.info('获取成功', keyWord)
-                this.listenBarrage(keyWord)
-            }).catch(err => {
-                hyExt.logger.warn('获取失败', err)
-            })
-            //监听弹幕
-            //其实还要做判断keyword是不是空
-            //还可以根据弹幕禁言 可能只是警告
-            //有查房 可以提醒
-            //就叫弹幕助手
-            
-            // hyExt.context.onBarrageChange({
-            //     content: keyWord
-            // }, barrageInfo => {
-            //     hyExt.logger.info('有新弹幕', barrageInfo)
-            // }).then((barrageInfo) => {
-            //     hyExt.logger.info('监听成功')
-            //     if(barrageInfo){
-            //         console.log(barrageInfo.sendNick)
-            //     }
-            //     // hyExt.stream.addZone(document.getElementById('zone')).then(() => {
-            //     //     hyExt.logger.info('创建白板成功')
-            //     // }).catch(err => {
-            //     //     hyExt.logger.warn('创建白板失败', err)
-            //     // })
-            // }).catch(err => {
-            //     hyExt.logger.warn('监听失败', err)
-            // })
-            //创建白板
-            // hyExt.stream.addZone(document.getElementById('zone')).then(() => {
-            //     hyExt.logger.info('创建白板成功')
-            // }).catch(err => {
-            //     hyExt.logger.warn('创建白板失败', err)
-            // })
-            //删除白板
-        },
-        stopListen(){
-            hyExt.context.offBarrageChange()
-        },
-        listenBarrage(value){
-            console.log(111)
-            hyExt.context.onBarrageChange({
-                content:value
-            }, barrageInfo => {
-                console.log(222)
-                console.log(barrageInfo)
-                // this.show=true
-                //创建白板
-                hyExt.logger.info('有新弹幕', barrageInfo)
-            }).then(() => {
-                hyExt.logger.info('监听成功')
-            }).catch(err => {
-                hyExt.logger.warn('监听失败', err)
-            })
-        }
     }
 }
 </script>

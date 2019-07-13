@@ -1,9 +1,5 @@
 <template>
   <div id="streamerApp">
-    <!-- <img alt="Vue logo" src="./assets/img/icon.png">
-    <HelloWorld msg="Welcome to Your Vue.js Ext App"/> -->
-    <!-- <h2>Streamer side</h2> -->
-    <!-- <streamer-home></streamer-home> -->
     <transition enter-active-class="animated fadeInRight" leave-active-class="animated fadeOutLeft" mode="out-in">
       <router-view></router-view>
     </transition>
@@ -11,13 +7,8 @@
 </template>
 
 <script>
-// import streamerHome from './views/streamerHome.vue'
 
 export default {
-  // name: 'streamerApp',
-  // components: {
-    
-  // },
   created(){
     this.$router.push('/')
   }
