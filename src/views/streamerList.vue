@@ -130,17 +130,17 @@ export default {
         },
         createZone(item){
             //停止监听弹幕
-            // this.stopListen()
+            this.stopListen()
             // let ele=document.getElementById('zone')
             // console.log(ele.position.top)
             hyExt.stream.addZone(document.getElementById('zone')).then(() => {
                 hyExt.logger.info('创建白板成功')
-                // setTimeout(() => {
-                //     //删除白板
-                //     //重新开始监听
-                //     this.removeZone()
-                //     this.startListen(item)
-                // }, 8000);
+                setTimeout(() => {
+                    //删除白板
+                    //重新开始监听
+                    this.removeZone()
+                    this.startListen(item)
+                }, 8000);
             }).catch(err => {
                 hyExt.logger.warn('创建白板失败', err)
             })
