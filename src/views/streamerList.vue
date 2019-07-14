@@ -86,7 +86,7 @@ export default {
     },
     methods:{
         onChange(item){
-            if(this.on_count>=1){
+            if(this.on_count>=1&&!item.checked){
                 this.$message.warning('只能监听一个哦');
             }else{
                 item.checked=!item.checked
