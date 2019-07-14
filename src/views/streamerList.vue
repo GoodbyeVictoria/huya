@@ -19,13 +19,18 @@
                             <div>
                                 <a-switch :checked="item.checked" :disabled="item.disabled" @change='onChange(item)' style="margin-bottom:2px" />
                             </div>
-                            <div :id="item.key" class="zone">
-                                {{item.value.template}}这是模板模板模板
-                            </div>
                         </a-col>
                     </a-row>
                 </template>
             </transition-group>
+        </div>
+        <div class="preview">
+            <div class="zone" id="zone">
+                {{current_item}}
+            </div>
+        </div>
+        <div class="pagination">
+            <!-- 分页 -->
         </div>
     </div>
 </template>
@@ -39,15 +44,27 @@ export default {
             lists:[],
             on_count:0,
             loading:false,
+            current_item:'预览区域',
         }
     },
     created(){
-        //获取模板数据，拼成要用的样子
         this.loading=true
+        let isOn=false
+        //判断有没有开播
+        //给一个重新刷新页面的按钮
+        hyExt.context.getLiveInfo().then(liveInfo => {
+            hyExt.logger.info('liveInfo', liveInfo)
+            if(liveInfo.isOn){
+                isOn=true
+            }
+        }).catch(err => {
+            hyExt.logger.warn('get liveInfo failed', err)
+        })
+         //获取模板数据，拼成要用的样子
         hyExt.storage.getKeys().then(keys=>{
             hyExt.logger.info('获取成功', keys)
             keys.forEach(ele=>{
-                let obj={key:ele,checked:false,disabled:false}
+                let obj={key:ele,checked:false,disabled:!isOn,show:false}
                 hyExt.storage.getItem(ele).then(value => {
                     hyExt.logger.info('获取成功', value)
                     let data=JSON.parse(value)
@@ -69,10 +86,9 @@ export default {
     },
     methods:{
         onChange(item){
-            if(this.on_count>=5){
-                this.$message.warning('监听个数不能超过5个哦');
+            if(this.on_count>=1){
+                this.$message.warning('只能监听一个哦');
             }else{
-                //判断有没有开播
                 item.checked=!item.checked
                 this.listen_count()
                 if(item.checked){
@@ -94,6 +110,7 @@ export default {
         },
         startListen(item){
             //其实可以不止监听关键词。。。
+            this.current_item=item.value.template
             item.disabled=true
             let keyWord=item.value.keyWord
             hyExt.context.onBarrageChange({
@@ -112,8 +129,18 @@ export default {
             
         },
         createZone(item){
-            hyExt.stream.addZone(document.getElementById(item.key),{screenColor:"#FFEDAC"}).then(() => {
+            //停止监听弹幕
+            // this.stopListen()
+            // let ele=document.getElementById('zone')
+            // console.log(ele.position.top)
+            hyExt.stream.addZone(document.getElementById('zone')).then(() => {
                 hyExt.logger.info('创建白板成功')
+                // setTimeout(() => {
+                //     //删除白板
+                //     //重新开始监听
+                //     this.removeZone()
+                //     this.startListen(item)
+                // }, 8000);
             }).catch(err => {
                 hyExt.logger.warn('创建白板失败', err)
             })
@@ -121,7 +148,14 @@ export default {
         stopListen(){
             //取消某个关键词监听
             hyExt.context.offBarrageChange()
-        }
+        },
+        removeZone(){
+            hyExt.stream.removeZone().then(() => {
+                hyExt.logger.info('删除白板成功')
+            }).catch(err => {
+                hyExt.logger.warn('删除白板失败', err)
+            })
+        },
     }
 }
 </script>
@@ -151,12 +185,22 @@ export default {
     }
 }
 .zone{
-    display:none;
-    width:50px;
-    height:50px;
+    position:fixed;
+    width:60%;
+    height:27%;
+    margin:8px 14%;
+    background-color: #e9f5ff80;
+    padding:50px 0;
 }
 .loading{
     position:fixed;
+}
+.preview{
+    position:fixed;
+    border:1px dashed rgb(95, 91, 91);
+    width:90%;
+    height:30%;
+    top:63%;
 }
 
 </style>

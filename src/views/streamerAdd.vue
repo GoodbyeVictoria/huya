@@ -27,9 +27,12 @@
                     />
                 </a-form-item>
                 <a-form-item label="请输入模板内容" :label-col="{ span: 4 }" :wrapper-col="{ span: 8 }">
-                    <a-textarea 
-                        placeholder="88法穿" 
+                    <!-- <a-textarea 
                         :autosize="{ minRows: 2, maxRows: 6 }" 
+                        v-decorator="['template',{rules: [{ required: true, message: '请输入模板内容' }]}]"
+                    /> -->
+                    <a-input
+                        placeholder="88法穿"
                         v-decorator="[
                         'template',
                         {rules: [{ required: true, message: '请输入模板内容' }]}
@@ -58,6 +61,7 @@ export default {
             title_valid:true,
             is_finish:false,
             disabled:false,
+            template:'',
         }
     },
     components:{
@@ -66,18 +70,6 @@ export default {
     methods:{
         goBack(){
             this.$router.push('/')
-        },
-        validTitle(title,callBack){
-            hyExt.storage.getKeys().then(keys => {
-                hyExt.logger.info('获取成功', keys)
-                this.title_valid=keys.every(ele=>{
-                    return ele!==title
-                })
-                callBack()
-                
-            }).catch(err => {
-                hyExt.logger.warn('获取失败', err)
-            })
         },
         handleSubmit(e){
             e.preventDefault()
@@ -122,26 +114,22 @@ export default {
 <style lang="scss">
 @import "./../assets/scss/partial/flex";
 
- .zone{
-     position:fixed;
-     width:50%;
-     height:50%;
-     border:2px solid rosybrown;
-     text-align: center;
- }
  .streamerMain{
     @include flexCenter;
     @include flex-direction(column);
     width: 100%;
     height: 100%;
  }
-.anticon{
-    margin-right:3px;
-    font-size:20px;
- }
- .alert{
+.alert{
      position:fixed;
      top:52px;
+ }
+ .textarea{
+    max-width: 100%;
+    height: auto;
+    vertical-align: bottom;
+    transition: all 0.3s, height 0s;
+    min-height: 32px;
  }
 </style>
 
