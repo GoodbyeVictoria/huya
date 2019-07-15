@@ -1,14 +1,15 @@
 <template>
     <div class="top"  @click="goBack">
-        <a-icon type="left-circle" theme="twoTone" twoToneColor="#FFA591" />返回主页
+        <a-icon type="left-circle" theme="twoTone" twoToneColor="#FFA591" />{{content}}
     </div>
 </template>
 
 <script>
 export default {
+    props:['path','content'],
     methods:{
         goBack(){
-            this.$router.push('/')
+            this.$router.push(`/${this.path}`)
         }
     }
 }
