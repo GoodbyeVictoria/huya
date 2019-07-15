@@ -1,21 +1,35 @@
 <template>
     <div class="streamerList">
-        <backHome></backHome>
+        <back :path="back_path" content="返回主页"></back>
         <div v-show="loading" class="loading">
             <a-spin size="large"></a-spin>
         </div>
         <div class="list-wrapper">
             <a-row>
-                <a-col :span="8"><div>标题</div></a-col>
-                <a-col :span="8"><div>关键字</div></a-col>
-                <a-col :span="8"><div>off/on</div></a-col>
+                <a-col :span="6"><div>标题</div></a-col>
+                <a-col :span="6"><div>关键字</div></a-col>
+                <a-col :span="6"><div>操作</div></a-col>
+                <a-col :span="6"><div>off/on</div></a-col>
             </a-row>
-            <transition-group name="list-tran" enter-active-class="animated fadeInRight faster">
-                <template v-for="item in lists">
+            <transition-group name="list-tran" enter-active-class="animated fadeInRight faster" leave-active-class="animated fadeOutLeft faster">
+                <template v-for="item in show_lists">
                     <a-row :key="item.key">
-                        <a-col :span="8"><div>{{item.key}}</div></a-col>
-                        <a-col :span="8"><div>{{item.value.keyWord}}</div></a-col>
-                        <a-col :span="8">
+                        <a-col :span="6"><div>{{item.value.title}}</div></a-col>
+                        <a-col :span="6"><div>{{item.value.keyWord}}</div></a-col>
+                        <a-col :span="6">
+                            <a-dropdown>
+                                <a class="ant-dropdown-link" href="#">编辑</a>
+                                <a-menu slot="overlay">
+                                    <a-menu-item>
+                                        <a href="javascript:;" @click="goToUpdate(item)">修改</a>
+                                    </a-menu-item>
+                                    <a-menu-item>
+                                        <a href="javascript:;" @click="removeItem(item)">删除</a>
+                                    </a-menu-item>
+                                </a-menu>
+                            </a-dropdown>
+                        </a-col>
+                        <a-col :span="6">
                             <div>
                                 <a-switch :checked="item.checked" :disabled="item.disabled" @change='onChange(item)' style="margin-bottom:2px" />
                             </div>
@@ -23,37 +37,50 @@
                     </a-row>
                 </template>
             </transition-group>
+            
+        </div>
+        <div class="pagination" v-show="!loading">
+            <!-- 分页 -->
+            <a-pagination simple v-model="cur_page" :pageSize="pageSize" :total="5" @change="page_onChange" />
         </div>
         <div class="preview">
             <div class="zone" id="zone">
                 {{current_item}}
             </div>
         </div>
-        <div class="pagination">
-            <!-- 分页 -->
-        </div>
+        
     </div>
 </template>
 
 <script>
-import backHome from './../components/backHome'
+import back from './../components/back'
+import { async } from 'q';
 
 export default {
     data(){
         return{
             lists:[],
+            show_lists:[],
             on_count:0,
             loading:false,
             current_item:'预览区域',
+            back_path:'',
+            cur_page:1,
+            pageSize:3,
+            total:0,
         }
     },
     created(){
         this.loading=true
         let isOn=false
+        this.lists=this.$store.state.lists
+        this.show_lists=this.lists.slice(0,3)
+        console.log(this.show_lists)
         //判断有没有开播
         //给一个重新刷新页面的按钮
         hyExt.context.getLiveInfo().then(liveInfo => {
             hyExt.logger.info('liveInfo', liveInfo)
+            this.loading=false;
             if(liveInfo.isOn){
                 isOn=true
             }
@@ -61,28 +88,35 @@ export default {
             hyExt.logger.warn('get liveInfo failed', err)
         })
          //获取模板数据，拼成要用的样子
-        hyExt.storage.getKeys().then(keys=>{
-            hyExt.logger.info('获取成功', keys)
-            keys.forEach(ele=>{
-                let obj={key:ele,checked:false,disabled:!isOn,show:false}
-                hyExt.storage.getItem(ele).then(value => {
-                    hyExt.logger.info('获取成功', value)
-                    let data=JSON.parse(value)
-                    obj.value=data
-                    this.lists.push(obj)
-                }).catch(err => {
-                    hyExt.logger.warn('获取失败', err)
-                })
-            })
-            this.loading=false
-        }).catch(err=>{
-            hyExt.logger.warn('获取失败', err)
-        })
+        // hyExt.storage.getKeys().then(keys=>{
+        //     hyExt.logger.info('获取成功', keys)
+        //     keys.forEach(ele=>{
+        //         let obj={key:ele,checked:false,disabled:!isOn,show:false}
+        //         hyExt.storage.getItem(ele).then(value => {
+        //             hyExt.logger.info('获取成功', value)
+        //             let data=JSON.parse(value)
+        //             obj.value=data
+        //             this.lists.push(obj)
+                    
+        //         }).catch(err => {
+        //             hyExt.logger.warn('获取失败', err)
+        //         })
+        //     })
+        //     this.loading=false;
+        //     this.total= this.lists.length
+        //     // this.show_lists = Array.prototype.slice.call(this.lists,0,5)
+        //     // console.log(this.show_lists)
+        //     // this.setShowList()
+        //     console.log(this.show_lists)
+        //     this.$store.commit('setLists',{lists:this.lists})
+        // }).catch(err=>{
+        //     hyExt.logger.warn('获取失败', err)
+        // })
     },
     computed:{
     },
     components:{
-        backHome
+        back
     },
     methods:{
         onChange(item){
@@ -98,7 +132,11 @@ export default {
                     //删掉白板
                 }
             }
-            
+        },
+        async setShowList(){
+             this.show_lists = await this.lists.slice(0,5)
+             console.log(this.show_lists)
+            //  this.show_lists= await lists_c.slice(0,this.pageSize)
         },
         listen_count(){
             this.on_count = this.lists.reduce((acc,cur)=>{
@@ -126,21 +164,20 @@ export default {
             }).catch(err => {
                 hyExt.logger.warn('监听失败', err)
             })
-            
         },
         createZone(item){
             //停止监听弹幕
-            this.stopListen()
+            // this.stopListen()
             // let ele=document.getElementById('zone')
             // console.log(ele.position.top)
             hyExt.stream.addZone(document.getElementById('zone')).then(() => {
                 hyExt.logger.info('创建白板成功')
-                setTimeout(() => {
-                    //删除白板
-                    //重新开始监听
-                    this.removeZone()
-                    this.startListen(item)
-                }, 8000);
+                // setTimeout(() => {
+                //     //删除白板
+                //     //重新开始监听
+                //     this.removeZone()
+                //     this.startListen(item)
+                // }, 8000);
             }).catch(err => {
                 hyExt.logger.warn('创建白板失败', err)
             })
@@ -155,6 +192,31 @@ export default {
             }).catch(err => {
                 hyExt.logger.warn('删除白板失败', err)
             })
+        },
+        goToUpdate(item){
+            this.$store.commit('getItem',{item:item})
+            this.$router.push(`/update/${item.key}`)
+        },
+        removeItem(item){
+            let pos=this.lists.map(ele=>ele.key).indexOf(item.key)
+            console.log(pos)
+            this.lists.splice(pos,1)
+            //removeItem
+            hyExt.storage.removeItem(item.key).then(()=>{
+                hyExt.logger.info('删除item成功')
+            }).catch(err=>{
+                hyExt.logger.warn('删除item失败', err)
+            })
+        },
+        page_onChange(page){
+            //可能key有问题，后面给每个item一个id
+            console.log(page)
+            this.cur_page=page
+            let start = page*this.pageSize
+            let end = start + this.pageSize + 1
+            this.show_lists=this.lists.slice(start,end)
+            console.log(this.lists)
+            console.log(this.lists.slice(1,this.pageSize))
         },
     }
 }
@@ -201,6 +263,15 @@ export default {
     width:90%;
     height:30%;
     top:63%;
+}
+.action-active:hover{
+    cursor:pointer;
+    color:brown;
+    text-decoration: underline;
+}
+.pagination{
+    position:fixed;
+    top:56%;
 }
 
 </style>
