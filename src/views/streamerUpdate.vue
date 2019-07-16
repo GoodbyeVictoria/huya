@@ -76,6 +76,7 @@ export default {
     },
     methods:{
         goBack(){
+            //yonghistory
             this.$router.push(`/${this.back_path}`)
         },
         handleSubmit(e){
@@ -101,7 +102,7 @@ export default {
                                     hyExt.logger.info('设置成功', values.keyWord)
                                     this.is_finish=true
                                     this.disabled=false
-                                    this.$message.success('添加成功', 1).then(this.goBack)
+                                    this.$message.success('修改成功', 1).then(this.goBack)
                                 }).catch(err => {
                                     hyExt.logger.warn('设置失败', err)
                                 })
