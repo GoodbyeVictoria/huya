@@ -133,11 +133,6 @@ export default {
                 }
             }
         },
-        async setShowList(){
-             this.show_lists = await this.lists.slice(0,5)
-             console.log(this.show_lists)
-            //  this.show_lists= await lists_c.slice(0,this.pageSize)
-        },
         listen_count(){
             this.on_count = this.lists.reduce((acc,cur)=>{
                 if(cur.checked){
@@ -211,12 +206,12 @@ export default {
         page_onChange(page){
             //可能key有问题，后面给每个item一个id
             console.log(page)
-            this.cur_page=page
-            let start = page*this.pageSize
-            let end = start + this.pageSize + 1
-            this.show_lists=this.lists.slice(start,end)
-            console.log(this.lists)
-            console.log(this.lists.slice(1,this.pageSize))
+            // this.cur_page=page
+            // let start = page*this.pageSize
+            // let end = start + this.pageSize + 1
+            // this.show_lists=this.lists.slice(start,end)
+            // console.log(this.lists)
+            // console.log(this.lists.slice(1,this.pageSize))
         },
     }
 }
@@ -241,6 +236,7 @@ export default {
     border-top:1px solid rgb(95, 91, 91);
     border-bottom: 1px solid rgb(95, 91, 91);
     margin:-1px 0 -1px 0;
+    padding:6px 0px;
     div{
         background: transparent;
         border: 0;

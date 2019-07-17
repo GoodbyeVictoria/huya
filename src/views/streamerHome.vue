@@ -29,7 +29,6 @@ export default {
             show:false,
             introType:'',
             anim:'',
-            lists:[],
             delay:[
                 {"animation-delay": "0s"},
                 {"animation-delay": "0.5s"},
@@ -95,19 +94,6 @@ export default {
                     this.isEmpty=false
                     this.introType='templates'
                     //初始化lists放在这里
-                    keys.forEach(ele=>{
-                        let obj={key:ele,checked:false,disabled:!isOn,show:false}
-                        hyExt.storage.getItem(ele).then(value => {
-                            hyExt.logger.info('获取成功', value)
-                            let data=JSON.parse(value)
-                            obj.value=data
-                            this.lists.push(obj)
-                            
-                        }).catch(err => {
-                            hyExt.logger.warn('获取失败', err)
-                        })
-                    })
-                    this.$store.commit('setLists',{lists:this.lists})
                 }
             }).catch(err => {
                 hyExt.logger.warn('获取失败', err)
