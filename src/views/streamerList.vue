@@ -41,7 +41,7 @@
         </div>
         <div class="pagination" v-show="!loading">
             <!-- 分页 -->
-            <a-pagination simple v-model="cur_page" :pageSize="pageSize" :total="total" @change="page_onChange" />
+            <a-pagination simple v-model="cur_page" :pageSize="pageSize" :total="5" @change="page_onChange" />
         </div>
         <div class="preview">
             <div class="zone" id="zone">
@@ -68,8 +68,6 @@ export default {
             cur_page:1,
             pageSize:3,
             total:0,
-            start:0,
-            end:3,
         }
     },
     created(){
@@ -91,10 +89,8 @@ export default {
         })
          //获取模板数据，拼成要用的样子
         hyExt.storage.getKeys().then(keys=>{
-            this.total=keys.length
             hyExt.logger.info('获取成功', keys)
-            let keys_page=keys.slice(this.start,this.end)
-            keys_page.forEach(ele=>{
+            keys.forEach(ele=>{
                 let obj={key:ele,checked:false,disabled:!isOn,show:false}
                 hyExt.storage.getItem(ele).then(value => {
                     hyExt.logger.info('获取成功', value)
@@ -107,6 +103,11 @@ export default {
                 })
             })
             this.loading=false;
+            // this.total= this.lists.length
+            // this.show_lists = Array.prototype.slice.call(this.lists,0,5)
+            // console.log(this.show_lists)
+            // this.setShowList()
+            // console.log(this.show_lists)
             this.$store.commit('setLists',{lists:this.lists})
         }).catch(err=>{
             hyExt.logger.warn('获取失败', err)
@@ -118,9 +119,6 @@ export default {
         back
     },
     methods:{
-        goPage(){
-            this.$router.push('/list')
-        },
         onChange(item){
             if(this.on_count>=1&&!item.checked){
                 this.$message.warning('只能监听一个哦');
@@ -134,6 +132,11 @@ export default {
                     //删掉白板
                 }
             }
+        },
+        async setShowList(){
+             this.show_lists = await this.lists.slice(0,5)
+             console.log(this.show_lists)
+            //  this.show_lists= await lists_c.slice(0,this.pageSize)
         },
         listen_count(){
             this.on_count = this.lists.reduce((acc,cur)=>{
@@ -209,14 +212,11 @@ export default {
             //可能key有问题，后面给每个item一个id
             console.log(page)
             this.cur_page=page
-            this.start=(page-1)*this.pageSize
-            // let start = page*this.pageSize
-            this.end = this.start + this.pageSize + 1
-            //刷新页面
-            this.goPage()
-            // this.show_lists=this.lists.slice(start,end)
-            // console.log(this.lists)
-            // console.log(this.lists.slice(1,this.pageSize))
+            let start = page*this.pageSize
+            let end = start + this.pageSize + 1
+            this.show_lists=this.lists.slice(start,end)
+            console.log(this.lists)
+            console.log(this.lists.slice(1,this.pageSize))
         },
     }
 }
