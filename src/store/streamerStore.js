@@ -5,11 +5,24 @@ Vue.use(Vuex)
 
 const store=new Vuex.Store({
     state:{
-        isEmpty:''
+        isEmpty:'',
+        lists:[],
+        cur_item:''
+    },
+    getters:{
+        lists_length:state=>state.lists.length
     },
     mutations:{
         changeEmpty(state,payload){
             state.isEmpty=payload
+        },
+        setLists(state,payload){
+            state.lists=payload.lists
+        },
+        getItem(state,payload){
+            let key=payload.item.key
+            let pos=state.lists.map(ele=>ele.key).indexOf(key)
+            state.cur_item=state.lists[pos]
         }
     },
     actions:{

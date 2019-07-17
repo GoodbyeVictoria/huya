@@ -1,6 +1,6 @@
 <template>
     <div class="streamerMain">
-        <back :path="back_path" content="返回主页"></back>
+        <back :path="back_path" content="返回模板列表"></back>
         <div class="form-wrapper">
             <a-form :form="form" @submit="handleSubmit" class="form">
                 <a-form-item 
@@ -53,6 +53,7 @@
 import back from './../components/back'
 
 export default {
+    props:['item_key'],
     data(){
         return {
             formLayout:'horizontal',
@@ -62,15 +63,21 @@ export default {
             is_finish:false,
             disabled:false,
             template:'',
-            back_path:'',
+            cur_item:'',
+            back_path:'list'
         }
     },
     components:{
         back
     },
+    mounted(){
+        this.cur_item=this.$store.state.cur_item
+        this.form.setFieldsValue({...this.cur_item.value})
+    },
     methods:{
         goBack(){
-            this.$router.push('/')
+            //yonghistory
+            this.$router.push(`/${this.back_path}`)
         },
         handleSubmit(e){
             e.preventDefault()
@@ -84,18 +91,18 @@ export default {
                         hyExt.storage.getKeys().then(keys => {
                             hyExt.logger.info('获取成功', keys)
                             this.title_valid=keys.every(ele=>{
-                                return ele!==values.title
+                                return ele!==values.title||ele==this.item_key
                             })
                             if(!this.title_valid){
-                                this.$message.error('标题名称重复');
+                                this.$message.error('与已有标题名称重复');
                                 this.disabled=false
                             }else if(this.title_valid&&!err){
                                 let value=JSON.stringify(values)
-                                hyExt.storage.setItem(values.title, value).then(() => {
+                                hyExt.storage.setItem(this.item_key, value).then(() => {
                                     hyExt.logger.info('设置成功', values.keyWord)
                                     this.is_finish=true
                                     this.disabled=false
-                                    this.$message.success('添加成功', 1).then(this.goBack)
+                                    this.$message.success('修改成功', 1).then(this.goBack)
                                 }).catch(err => {
                                     hyExt.logger.warn('设置失败', err)
                                 })

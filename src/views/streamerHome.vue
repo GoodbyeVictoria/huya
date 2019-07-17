@@ -93,6 +93,7 @@ export default {
                     this.show=true
                     this.isEmpty=false
                     this.introType='templates'
+                    //初始化lists放在这里
                 }
             }).catch(err => {
                 hyExt.logger.warn('获取失败', err)

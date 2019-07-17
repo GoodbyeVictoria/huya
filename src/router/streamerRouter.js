@@ -3,6 +3,7 @@ import VueRouter from 'vue-router'
 import streamerHome from './../views/streamerHome'
 import streamerAdd from './../views/streamerAdd'
 import streamerList from './../views/streamerList'
+import streamerUpdate from './../views/streamerUpdate'
 
 Vue.use(VueRouter)
 
@@ -21,6 +22,12 @@ const routes=[
         path:'/list',
         name:'list',
         component:streamerList
+    },
+    {
+        path:'/update/:item_key',
+        name:'update',
+        props:true,
+        component:streamerUpdate
     },
 ]
 
