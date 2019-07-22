@@ -6,8 +6,29 @@
 
 <script>
 
+
 export default {
+  created(){
+    
+    hyExt.onLoad(()=>{
+        this.api.request().then(res=>{
+            console.log(res)
+        })
+    })
+    this.getUserInfo()
   
+      
+ 
+  },
+  methods:{
+      getUserInfo() {
+                hyExt.context.getUserInfo()
+                    .then(userInfo => {
+                        this.userInfo = userInfo;
+                        console.log('用户信息', userInfo);
+                    })
+            },
+  }
   
 }
 </script>
@@ -15,20 +36,6 @@ export default {
 <style lang="scss">
   @import "./assets/scss/common.scss";
   
-  // body{
-  //   background-color: antiquewhite;
-  // }
-// #app {
-//   font-family: 'Avenir', Helvetica, Arial, sans-serif;
-//   -webkit-font-smoothing: antialiased;
-//   -moz-osx-font-smoothing: grayscale;
-//   text-align: center;
-//   color: #2c3e50;
-  
-//   // width:375px;
-//   // height:601px;
-//   // border:1px solid black;
-// }
 </style>
 
 
