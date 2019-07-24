@@ -12,7 +12,7 @@
                 <a-col :span="6"><div>off/on</div></a-col>
             </a-row>
             <transition-group name="list-tran" enter-active-class="animated fadeInRight faster" leave-active-class="animated fadeOutLeft faster">
-                <template v-for="item in lists">
+                <template v-for="item in showLists(lists,start,end)">
                     <a-row :key="item.key">
                         <a-col :span="6"><div>{{item.value.title}}</div></a-col>
                         <a-col :span="6"><div>{{item.value.keyWord}}</div></a-col>
@@ -37,11 +37,10 @@
                     </a-row>
                 </template>
             </transition-group>
-            
         </div>
         <div class="pagination" v-show="!loading">
             <!-- 分页 -->
-            <a-pagination simple v-model="cur_page" :pageSize="pageSize" :total="5" @change="page_onChange" />
+            <a-pagination simple v-model="cur_page" :pageSize="pageSize" :total=total @change="page_onChange" />
         </div>
         <div class="preview">
             <div class="zone" id="zone">
@@ -54,28 +53,24 @@
 
 <script>
 import back from './../components/back'
-import { async } from 'q';
 
 export default {
     data(){
         return{
             lists:[],
-            show_lists:[],
             on_count:0,
             loading:false,
             current_item:'预览区域',
             back_path:'',
             cur_page:1,
-            pageSize:3,
-            total:0,
+            pageSize:4,
+            start:0,
+            end:4,
         }
     },
     created(){
         this.loading=true
         let isOn=false
-        // this.lists=this.$store.state.lists
-        // this.show_lists=this.lists.slice(0,3)
-        // console.log(this.show_lists)
         //判断有没有开播
         //给一个重新刷新页面的按钮
         hyExt.context.getLiveInfo().then(liveInfo => {
@@ -103,17 +98,18 @@ export default {
                 })
             })
             this.loading=false;
-            // this.total= this.lists.length
-            // this.show_lists = Array.prototype.slice.call(this.lists,0,5)
-            // console.log(this.show_lists)
-            // this.setShowList()
-            // console.log(this.show_lists)
             this.$store.commit('setLists',{lists:this.lists})
         }).catch(err=>{
             hyExt.logger.warn('获取失败', err)
         })
     },
     computed:{
+        show_lists(){
+            return this.lists.slice(0,this.pageSize)
+        },
+        total(){
+            return this.lists.length
+        }
     },
     components:{
         back
@@ -121,7 +117,7 @@ export default {
     methods:{
         onChange(item){
             if(this.on_count>=1&&!item.checked){
-                this.$message.warning('只能监听一个哦');
+                this.$message.warning('只能监听一个哦')
             }else{
                 item.checked=!item.checked
                 this.listen_count()
@@ -155,6 +151,7 @@ export default {
                 hyExt.logger.info('有新弹幕', barrageInfo)
             }).then(() => {
                 item.disabled=false
+                this.$message.success('开始监听', 1)
                 hyExt.logger.info('监听成功')
             }).catch(err => {
                 hyExt.logger.warn('监听失败', err)
@@ -162,23 +159,22 @@ export default {
         },
         createZone(item){
             //停止监听弹幕
-            // this.stopListen()
-            // let ele=document.getElementById('zone')
-            // console.log(ele.position.top)
+            this.stopListen()
             hyExt.stream.addZone(document.getElementById('zone')).then(() => {
                 hyExt.logger.info('创建白板成功')
-                // setTimeout(() => {
-                //     //删除白板
-                //     //重新开始监听
-                //     this.removeZone()
-                //     this.startListen(item)
-                // }, 8000);
+                setTimeout(() => {
+                    //删除白板
+                    //重新开始监听
+                    this.removeZone()
+                    this.startListen(item)
+                }, 8000);
             }).catch(err => {
                 hyExt.logger.warn('创建白板失败', err)
             })
         },
         stopListen(){
             //取消某个关键词监听
+            this.$message.warning('监听已关闭')
             hyExt.context.offBarrageChange()
         },
         removeZone(){
@@ -203,15 +199,16 @@ export default {
                 hyExt.logger.warn('删除item失败', err)
             })
         },
+        showLists(lists,start,end){
+            return lists.slice(start,end)
+        },
         page_onChange(page){
-            //可能key有问题，后面给每个item一个id
-            console.log(page)
-            // this.cur_page=page
-            // let start = page*this.pageSize
-            // let end = start + this.pageSize + 1
-            // this.show_lists=this.lists.slice(start,end)
-            // console.log(this.lists)
-            // console.log(this.lists.slice(1,this.pageSize))
+            this.start = (page-1) * this.pageSize
+            this.end = this.start + this.pageSize
+            this.showLists(this.lists,this.start,this.end)
+        },
+        addDelay(el){
+            el.style.animationDelay = ".5s"
         },
     }
 }

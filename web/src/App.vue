@@ -15,19 +15,19 @@ export default {
             console.log(res)
         })
     })
-    this.getUserInfo()
+    // this.getUserInfo()
   
       
  
   },
   methods:{
-      getUserInfo() {
-                hyExt.context.getUserInfo()
-                    .then(userInfo => {
-                        this.userInfo = userInfo;
-                        console.log('用户信息', userInfo);
-                    })
-            },
+      // getUserInfo() {
+      //           hyExt.context.getUserInfo()
+      //               .then(userInfo => {
+      //                   this.userInfo = userInfo;
+      //                   console.log('用户信息', userInfo);
+      //               })
+      //       },
   }
   
 }

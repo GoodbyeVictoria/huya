@@ -8,23 +8,11 @@ var api={
             host:baseUrl,
             param:{extUuid},
             port:port,
-            httpMethod:'GET',
-            path:`/`
+            httpMethod:'POST',
+            path:`/streamer/getList`
           }
 
         console.log('请求', requestParam)
-        // return new Promise((resolve,reject)=>{
-        //     console.log(2222)
-        //     resolve()
-        // }).then(()=>{
-        //     console.log('执行这个')
-
-        //     throw new Error('nalibudui')
-        // }).catch(err=>{
-        //     console.log(err)
-        // }).then(() => {
-        //     console.log('执行“这个”，无论前面发生了什么');
-        // });
 
         return new Promise((resolve,reject)=>{
             hyExt.requestEbs(requestParam)
