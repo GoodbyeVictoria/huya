@@ -1,15 +1,15 @@
 
-const isDebug = false;
-const [extUuid,baseUrl,port] = ['extUuid_1561970987955','localhost',3000]
+import config from './config'
+const {extUuid,baseUrl,port} = config
 
 var api={
-    request(){
+    request({service,method = 'POST', params = {}}){
         var requestParam = {
             host:baseUrl,
-            param:{extUuid},
+            param:{extUuid,...params},
             port:port,
-            httpMethod:'POST',
-            path:`/streamer/getList`
+            httpMethod: method,
+            path:`/streamer/${service}`
           }
 
         console.log('请求', requestParam)
@@ -22,7 +22,6 @@ var api={
                             if(statusCode != 200 || !entity) {
                                 console.log('接口异常', res, msg, ebsResponse);
                             }
-                            console.log("fffffffff====="+JSON.stringify(ebsResponse))
                             console.log('响应', res, entity, statusCode, header);
                             const resp = typeof entity == 'string' ? JSON.parse(entity) : entity;
                             resolve(resp);

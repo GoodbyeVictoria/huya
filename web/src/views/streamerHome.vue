@@ -81,24 +81,46 @@ export default {
         goToList(){
             this.$router.push('/list')
         },
-    },
-    mounted(){
-        hyExt.storage.getKeys().then(keys => {
-                hyExt.logger.info('获取成功', keys)
-                if(keys.length===0){
-                    this.show=true
-                    this.intro_data=this.intro_msg
-                    this.introType='intro'
-                }else{
-                    this.show=true
-                    this.isEmpty=false
-                    this.introType='templates'
-                    //初始化lists放在这里
+        getList(){
+            this.api.request({method:'POST',service:'getList'}).then(result =>{
+                if(result.code==0){
+                    let data = result.data
+                    if(data.length===0){
+                        this.show=true
+                        this.intro_data=this.intro_msg
+                        this.introType='intro'
+                    }else{
+                        this.show=true
+                        this.isEmpty=false
+                        this.introType='templates'
+                    }
                 }
-            }).catch(err => {
-                hyExt.logger.warn('获取失败', err)
+            }).catch(err=>{
+                console.log(err.message)
             })
         },
+    },
+    mounted(){
+        hyExt.onLoad(() => {
+            hyExt.logger.info('loaded')
+            this.getList()
+        })
+        // hyExt.storage.getKeys().then(keys => {
+        //         hyExt.logger.info('获取成功', keys)
+        //         if(keys.length===0){
+        //             this.show=true
+        //             this.intro_data=this.intro_msg
+        //             this.introType='intro'
+        //         }else{
+        //             this.show=true
+        //             this.isEmpty=false
+        //             this.introType='templates'
+        //             //初始化lists放在这里
+        //         }
+        //     }).catch(err => {
+        //         hyExt.logger.warn('获取失败', err)
+        //     })
+    },
 }
 </script>
 <style lang="scss">

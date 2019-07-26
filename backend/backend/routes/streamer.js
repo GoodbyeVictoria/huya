@@ -9,8 +9,8 @@ const KEY = require('./../lib/secret')
 router.use(function(req,res,next){
     let token = req.headers.authorization
     //debug
-    let arr = token.split(" ")
-    token=arr[1]
+    // let arr = token.split(" ")
+    // token=arr[1]
     //
     if(token){
       //校验token
@@ -28,7 +28,6 @@ router.use(function(req,res,next){
 /* GET streamer listing. */
 router.post('/getList', function(req, res) {
   infoListDao.queryById(req.profileId).then((result)=>{
-    console.log(result)
      if(!result || typeof result == undefined){
       streamerDao.add(profileId)
     }
@@ -47,7 +46,7 @@ router.post('/getList', function(req, res) {
 });
 
 router.post('/addList',function(req, res){
-    infoListDao.add(req.profileId, req.query.list_key, req.query.list_value).then((result)=>{
+    infoListDao.add(req.profileId, req.body.list_key, req.body.list_value).then((result)=>{
         res.json({
             code:0,
             msg:"success"
@@ -61,7 +60,21 @@ router.post('/addList',function(req, res){
 })
 
 router.post('/updateList',function(req, res){
-    infoListDao.update(req.query.id, req.query.list_key, req.query.list_value).then((result)=>{
+    infoListDao.update(req.body.id, req.body.list_key, req.body.list_value).then((result)=>{
+        res.json({
+            code:0,
+            msg:"success"
+        })
+    }).catch(err=>{
+        res.json({
+            code:1,
+            msg:err.message
+        })
+    })
+})
+
+router.post('/updateListByKey',function(req, res){
+    infoListDao.update(req.body.list_key_o, req.body.list_key, req.body.list_value).then((result)=>{
         res.json({
             code:0,
             msg:"success"
@@ -75,7 +88,21 @@ router.post('/updateList',function(req, res){
 })
 
 router.post('/deleteList',function(req, res){
-    infoListDao.delete(req.query.id).then((result)=>{
+    infoListDao.delete(req.body.id).then((result)=>{
+        res.json({
+            code:0,
+            msg:"success"
+        })
+    }).catch(err=>{
+        res.json({
+            code:1,
+            msg:err.message
+        })
+    })
+})
+
+router.post('/deleteListByKey',function(req, res){
+    infoListDao.delete(req.body.list_key).then((result)=>{
         res.json({
             code:0,
             msg:"success"

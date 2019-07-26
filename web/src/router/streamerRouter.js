@@ -24,7 +24,7 @@ const routes=[
         component:streamerList
     },
     {
-        path:'/update/:item_key',
+        path:'/update/:item_key/:item_title',
         name:'update',
         props:true,
         component:streamerUpdate

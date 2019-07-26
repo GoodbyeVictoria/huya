@@ -70,38 +70,42 @@ export default {
     },
     created(){
         this.loading=true
-        let isOn=false
+        let isOn=true
         //判断有没有开播
         //给一个重新刷新页面的按钮
-        hyExt.context.getLiveInfo().then(liveInfo => {
-            hyExt.logger.info('liveInfo', liveInfo)
-            this.loading=false;
-            if(liveInfo.isOn){
-                isOn=true
-            }
-        }).catch(err => {
-            hyExt.logger.warn('get liveInfo failed', err)
+        // hyExt.context.getLiveInfo().then(liveInfo => {
+        //     hyExt.logger.info('liveInfo', liveInfo)
+        //     this.loading=false;
+        //     if(liveInfo.isOn){
+        //         isOn=true
+        //     }
+        // }).catch(err => {
+        //     hyExt.logger.warn('get liveInfo failed', err)
+        // })
+        hyExt.onLoad(() => {
+            hyExt.logger.info('loaded')
+            this.getList(isOn)
         })
          //获取模板数据，拼成要用的样子
-        hyExt.storage.getKeys().then(keys=>{
-            hyExt.logger.info('获取成功', keys)
-            keys.forEach(ele=>{
-                let obj={key:ele,checked:false,disabled:!isOn,show:false}
-                hyExt.storage.getItem(ele).then(value => {
-                    hyExt.logger.info('获取成功', value)
-                    let data=JSON.parse(value)
-                    obj.value=data
-                    this.lists.push(obj)
+        // hyExt.storage.getKeys().then(keys=>{
+        //     hyExt.logger.info('获取成功', keys)
+        //     keys.forEach(ele=>{
+        //         let obj={key:ele,checked:false,disabled:!isOn,show:false}
+        //         hyExt.storage.getItem(ele).then(value => {
+        //             hyExt.logger.info('获取成功', value)
+        //             let data=JSON.parse(value)
+        //             obj.value=data
+        //             this.lists.push(obj)
                     
-                }).catch(err => {
-                    hyExt.logger.warn('获取失败', err)
-                })
-            })
-            this.loading=false;
-            this.$store.commit('setLists',{lists:this.lists})
-        }).catch(err=>{
-            hyExt.logger.warn('获取失败', err)
-        })
+        //         }).catch(err => {
+        //             hyExt.logger.warn('获取失败', err)
+        //         })
+        //     })
+        //     this.loading=false;
+        //     this.$store.commit('setLists',{lists:this.lists})
+        // }).catch(err=>{
+        //     hyExt.logger.warn('获取失败', err)
+        // })
     },
     computed:{
         show_lists(){
@@ -115,6 +119,22 @@ export default {
         back
     },
     methods:{
+        getList(isOn){
+            this.api.request({method:'POST',service:'getList'}).then(result =>{
+                if(result.code==0){
+                    let data = result.data
+                    data.forEach(ele=>{
+                        let obj={key:ele.id,checked:false,disabled:!isOn,show:false}
+                        obj.value = JSON.parse(ele.list_value)
+                        this.lists.push(obj)
+                    })
+                    this.loading=false;
+                    this.$store.commit('setLists',{lists:this.lists})
+                }
+            }).catch(err=>{
+                console.log(err.message)
+            })
+        },
         onChange(item){
             if(this.on_count>=1&&!item.checked){
                 this.$message.warning('只能监听一个哦')
@@ -186,18 +206,27 @@ export default {
         },
         goToUpdate(item){
             this.$store.commit('getItem',{item:item})
-            this.$router.push(`/update/${item.key}`)
+            this.$router.push(`/update/${item.key}/${item.value.title}`)
+        },
+        deleteList(item){
+            //removeItem
+            this.api.request({service:'/deleteList',params:{id:item.key}}).then(()=>{
+                console.log('删除成功')
+            }).catch(err=>{
+                console.log(err.message)
+            })
         },
         removeItem(item){
             let pos=this.lists.map(ele=>ele.key).indexOf(item.key)
             console.log(pos)
             this.lists.splice(pos,1)
             //removeItem
-            hyExt.storage.removeItem(item.key).then(()=>{
-                hyExt.logger.info('删除item成功')
-            }).catch(err=>{
-                hyExt.logger.warn('删除item失败', err)
-            })
+            this.deleteList(item)
+            // hyExt.storage.removeItem(item.key).then(()=>{
+            //     hyExt.logger.info('删除item成功')
+            // }).catch(err=>{
+            //     hyExt.logger.warn('删除item失败', err)
+            // })
         },
         showLists(lists,start,end){
             return lists.slice(start,end)

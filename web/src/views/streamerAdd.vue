@@ -72,6 +72,41 @@ export default {
         goBack(){
             this.$router.push('/')
         },
+        getList(err,values){
+            this.api.request({method:'POST',service:'getList'}).then(result =>{
+                if(result.code==0){
+                    let data = result.data
+                    this.title_valid=data.every(ele=>{
+                        return ele.list_key!==values.title
+                    })
+                    if(!this.title_valid){
+                        this.$message.error('标题名称重复');
+                        this.disabled=false
+                    }else if(this.title_valid&&!err){
+                        let value=JSON.stringify(values)
+                        let questParams = {
+                            service:'addList',
+                            params:{
+                                list_key:values.title,
+                                list_value:value
+                            }
+                        }
+                        this.addList(questParams)
+                    }
+                }
+            }).catch(err=>{
+                console.log(err.message)
+            })
+        },
+        addList(questParams){
+            this.api.request(questParams).then(()=>{
+                this.is_finish=true
+                this.disabled=false
+                this.$message.success('添加成功', 1).then(this.goBack)
+            }).catch(err=>{
+                console.log(err.message)
+            })
+        },
         handleSubmit(e){
             e.preventDefault()
             this.disabled=true
@@ -81,29 +116,30 @@ export default {
                     this.disabled=false
                 }else{
                     this.$message.loading('loading').then(()=>{
-                        hyExt.storage.getKeys().then(keys => {
-                            hyExt.logger.info('获取成功', keys)
-                            this.title_valid=keys.every(ele=>{
-                                return ele!==values.title
-                            })
-                            if(!this.title_valid){
-                                this.$message.error('标题名称重复');
-                                this.disabled=false
-                            }else if(this.title_valid&&!err){
-                                let value=JSON.stringify(values)
-                                hyExt.storage.setItem(values.title, value).then(() => {
-                                    hyExt.logger.info('设置成功', values.keyWord)
-                                    this.is_finish=true
-                                    this.disabled=false
-                                    this.$message.success('添加成功', 1).then(this.goBack)
-                                }).catch(err => {
-                                    hyExt.logger.warn('设置失败', err)
-                                })
-                            }
+                        this.getList(err,values)
+                        // hyExt.storage.getKeys().then(keys => {
+                        //     hyExt.logger.info('获取成功', keys)
+                        //     this.title_valid=keys.every(ele=>{
+                        //         return ele!==values.title
+                        //     })
+                        //     if(!this.title_valid){
+                        //         this.$message.error('标题名称重复');
+                        //         this.disabled=false
+                        //     }else if(this.title_valid&&!err){
+                        //         let value=JSON.stringify(values)
+                        //         hyExt.storage.setItem(values.title, value).then(() => {
+                        //             hyExt.logger.info('设置成功', values.keyWord)
+                        //             this.is_finish=true
+                        //             this.disabled=false
+                        //             this.$message.success('添加成功', 1).then(this.goBack)
+                        //         }).catch(err => {
+                        //             hyExt.logger.warn('设置失败', err)
+                        //         })
+                        //     }
                                     
-                        }).catch(err => {
-                            hyExt.logger.warn('获取失败', err)
-                        })
+                        // }).catch(err => {
+                        //     hyExt.logger.warn('获取失败', err)
+                        // })
                     })
                 }
                 //验证样式

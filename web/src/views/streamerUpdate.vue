@@ -53,7 +53,7 @@
 import back from './../components/back'
 
 export default {
-    props:['item_key'],
+    props:['item_key','item_title'],
     data(){
         return {
             formLayout:'horizontal',
@@ -79,6 +79,42 @@ export default {
             //yonghistory
             this.$router.push(`/${this.back_path}`)
         },
+        getList(err,values){
+            this.api.request({method:'POST',service:'getList'}).then(result =>{
+                if(result.code==0){
+                    let data = result.data
+                    this.title_valid=data.every(ele=>{
+                        return ele.list_key!==values.title||values.title==this.item_title
+                    })
+                    if(!this.title_valid){
+                        this.$message.error('与已有标题名称重复');
+                        this.disabled=false
+                    }else if(this.title_valid&&!err){
+                        let value=JSON.stringify(values)
+                        let questParams = {
+                            service:'updateList',
+                            params:{
+                                id:this.item_key,
+                                list_key:values.title,
+                                list_value:value
+                            }
+                        }
+                        this.updateList(questParams)
+                    }
+                }
+            }).catch(err=>{
+                console.log(err.message)
+            })
+        },
+        updateList(questParams){
+            this.api.request(questParams).then(()=>{
+                this.is_finish=true
+                this.disabled=false
+                this.$message.success('修改成功', 1).then(this.goBack)
+            }).catch(err=>{
+                console.log(err.message)
+            })
+        },
         handleSubmit(e){
             e.preventDefault()
             this.disabled=true
@@ -88,29 +124,30 @@ export default {
                     this.disabled=false
                 }else{
                     this.$message.loading('loading').then(()=>{
-                        hyExt.storage.getKeys().then(keys => {
-                            hyExt.logger.info('获取成功', keys)
-                            this.title_valid=keys.every(ele=>{
-                                return ele!==values.title||ele==this.item_key
-                            })
-                            if(!this.title_valid){
-                                this.$message.error('与已有标题名称重复');
-                                this.disabled=false
-                            }else if(this.title_valid&&!err){
-                                let value=JSON.stringify(values)
-                                hyExt.storage.setItem(this.item_key, value).then(() => {
-                                    hyExt.logger.info('设置成功', values.keyWord)
-                                    this.is_finish=true
-                                    this.disabled=false
-                                    this.$message.success('修改成功', 1).then(this.goBack)
-                                }).catch(err => {
-                                    hyExt.logger.warn('设置失败', err)
-                                })
-                            }
+                        this.getList(err,values)
+                        // hyExt.storage.getKeys().then(keys => {
+                        //     hyExt.logger.info('获取成功', keys)
+                        //     this.title_valid=keys.every(ele=>{
+                        //         return ele!==values.title||values.title==this.item_key
+                        //     })
+                        //     if(!this.title_valid){
+                        //         this.$message.error('与已有标题名称重复');
+                        //         this.disabled=false
+                        //     }else if(this.title_valid&&!err){
+                        //         let value=JSON.stringify(values)
+                        //         hyExt.storage.setItem(this.item_key, value).then(() => {
+                        //             hyExt.logger.info('设置成功', values.keyWord)
+                        //             this.is_finish=true
+                        //             this.disabled=false
+                        //             this.$message.success('修改成功', 1).then(this.goBack)
+                        //         }).catch(err => {
+                        //             hyExt.logger.warn('设置失败', err)
+                        //         })
+                        //     }
                                     
-                        }).catch(err => {
-                            hyExt.logger.warn('获取失败', err)
-                        })
+                        // }).catch(err => {
+                        //     hyExt.logger.warn('获取失败', err)
+                        // })
                     })
                 }
                 //验证样式

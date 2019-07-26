@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import StreamerApp from './StreamerApp.vue'
 import './lib/rem.js'
+import api from './lib/api'
 import {Form,Input,Button,Icon,Alert,message,Row,Col,Switch,Spin,Dropdown,Menu,Pagination} from 'ant-design-vue'
 import 'ant-design-vue/dist/antd.css'
 import streamerStore from './store/streamerStore'
@@ -25,6 +26,7 @@ message.config({
   maxCount: 3,
 });
 Vue.prototype.$message = message;
+Vue.prototype.api = api
 
 
 new Vue({

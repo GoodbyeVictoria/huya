@@ -12,12 +12,7 @@ module.exports = {
     add:function(streamerId){
         pool.getConnection(function(err, connection) {
 			connection.query($sql.streamer.insert, [streamerId], function(err, result) {
-				if(result) {
-					
-                    // console.log(result)   
-                }
-                return result
-				
+                console.log(result) 
             })
             connection.release();
 		})
