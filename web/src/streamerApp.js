@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import StreamerApp from './StreamerApp.vue'
 import './lib/rem.js'
-import {Form,Input,Button,Icon,Alert,message,Row,Col,Switch,Spin,Dropdown,Menu,Pagination} from 'ant-design-vue'
+import {Form,Input,Button,Icon,Alert,message,Row,Col,Switch,Spin,Dropdown,Menu,Pagination,Slider} from 'ant-design-vue'
 import 'ant-design-vue/dist/antd.css'
 import streamerStore from './store/streamerStore'
 import streameRouter from './router/streamerRouter'
@@ -19,6 +19,7 @@ Vue.use(Spin)
 Vue.use(Dropdown)
 Vue.use(Menu)
 Vue.use(Pagination)
+Vue.use(Slider)
 message.config({
   top: `52px`,
   duration: 2,

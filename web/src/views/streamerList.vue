@@ -11,7 +11,7 @@
                 <a-col :span="6"><div>操作</div></a-col>
                 <a-col :span="6"><div>off/on</div></a-col>
             </a-row>
-            <transition-group name="list-tran" enter-active-class="animated fadeInRight faster" leave-active-class="animated fadeOutLeft faster">
+            <transition-group name="list-tran" enter-active-class="animated fadeInUp" leave-active-class="animated fadeOutUp">
                 <template v-for="item in showLists(lists,start,end)">
                     <a-row :key="item.key">
                         <a-col :span="6"><div>{{item.value.title}}</div></a-col>
@@ -43,6 +43,36 @@
             <a-pagination simple v-model="cur_page" :pageSize="pageSize" :total=total @change="page_onChange" />
         </div>
         <div class="preview">
+            <div class="edit-zone">
+                <div class="zone-size">
+                    <a-row>
+                        <a-col :span="6">
+                            <label>设置宽度</label>
+                        </a-col>
+                        <a-col :span="16">
+                            <a-slider :min="1" :max="10" v-model="width" />
+                        </a-col>
+                    </a-row>
+                    <a-row>
+                        <a-col :span="6">
+                            <label>设置高度</label>
+                        </a-col>
+                        <a-col :span="16">
+                            <a-slider :min="1" :max="10" v-model="height" />
+                        </a-col>
+                    </a-row>
+                </div>
+                <div class="zone-color">
+                    <a-row>
+                        <a-col :span="8">
+                            <label for="screenColor">设置透明底色</label>
+                        </a-col>
+                        <a-col :span="16">
+                            <input type="color" id="screenColor" name="screenColor" v-model="screenColor">
+                        </a-col>
+                    </a-row>
+                </div>
+            </div>
             <div class="zone" id="zone">
                 {{current_item}}
             </div>
@@ -63,25 +93,29 @@ export default {
             current_item:'预览区域',
             back_path:'',
             cur_page:1,
-            pageSize:4,
+            pageSize:1,
             start:0,
-            end:4,
+            end:1,
+            width:0,
+            height:0,
+            screenColor:"",
         }
     },
     created(){
         this.loading=true
-        let isOn=false
+        // let isOn=false
+        let isOn=true
         //判断有没有开播
         //给一个重新刷新页面的按钮
-        hyExt.context.getLiveInfo().then(liveInfo => {
-            hyExt.logger.info('liveInfo', liveInfo)
-            this.loading=false;
-            if(liveInfo.isOn){
-                isOn=true
-            }
-        }).catch(err => {
-            hyExt.logger.warn('get liveInfo failed', err)
-        })
+        // hyExt.context.getLiveInfo().then(liveInfo => {
+        //     hyExt.logger.info('liveInfo', liveInfo)
+        //     this.loading=false;
+        //     if(liveInfo.isOn){
+        //         isOn=true
+        //     }
+        // }).catch(err => {
+        //     hyExt.logger.warn('get liveInfo failed', err)
+        // })
          //获取模板数据，拼成要用的样子
         hyExt.storage.getKeys().then(keys=>{
             hyExt.logger.info('获取成功', keys)
@@ -229,7 +263,7 @@ export default {
     font-size:17px;
     margin-top: 10px;
 }
-.streamerList .ant-row{
+.list-wrapper .ant-row{
     border-top:1px solid rgb(95, 91, 91);
     border-bottom: 1px solid rgb(95, 91, 91);
     margin:-1px 0 -1px 0;
@@ -243,19 +277,19 @@ export default {
     position:fixed;
     width:60%;
     height:27%;
-    margin:8px 14%;
     background-color: #e9f5ff80;
     padding:50px 0;
+    transform: translate(30%,34%);
 }
 .loading{
     position:fixed;
 }
 .preview{
-    position:fixed;
-    border:1px dashed rgb(95, 91, 91);
-    width:90%;
-    height:30%;
-    top:63%;
+    position: fixed;
+    border: 1px dashed #5f5b5b;
+    width: 93%;
+    height: 61%;
+    top: 37%;
 }
 .action-active:hover{
     cursor:pointer;
@@ -264,7 +298,20 @@ export default {
 }
 .pagination{
     position:fixed;
-    top:56%;
+    top:29%;
+}
+.zone-size label{
+    display: inline-block;
+    padding: 7px;
+}
+.edit-zone{
+    padding: 0 0 5px 0;
+    border-bottom: 1px dashed #5f5b5b;
+}
+.zone-color{
+    position: relative;
+    left: 13px;
+    text-align: left;
 }
 
 </style>
