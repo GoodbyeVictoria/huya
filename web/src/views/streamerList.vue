@@ -11,7 +11,7 @@
                 <a-col :span="6"><div>操作</div></a-col>
                 <a-col :span="6"><div>off/on</div></a-col>
             </a-row>
-            <transition-group name="list-tran" enter-active-class="animated fadeInUp" leave-active-class="animated fadeOutUp">
+            <transition name="list-tran" enter-active-class="animated fadeInLeft fast" leave-active-class="animated fadeOutRight fast" mode="out-in">
                 <template v-for="item in showLists(lists,start,end)">
                     <a-row :key="item.key">
                         <a-col :span="6"><div>{{item.value.title}}</div></a-col>
@@ -36,10 +36,9 @@
                         </a-col>
                     </a-row>
                 </template>
-            </transition-group>
+            </transition>
         </div>
         <div class="pagination" v-show="!loading">
-            <!-- 分页 -->
             <a-pagination simple v-model="cur_page" :pageSize="pageSize" :total=total @change="page_onChange" />
         </div>
         <div class="preview">
@@ -47,34 +46,36 @@
                 <div class="zone-size">
                     <a-row>
                         <a-col :span="6">
-                            <label>设置宽度</label>
+                            <label>宽度</label>
                         </a-col>
                         <a-col :span="16">
-                            <a-slider :min="1" :max="10" v-model="width" />
+                            <a-slider :min="1" :max="20" :defaultValue="6.0" :step="0.1" @change="changeWidth" @afterChange="refreshZone" />
                         </a-col>
                     </a-row>
                     <a-row>
                         <a-col :span="6">
-                            <label>设置高度</label>
+                            <label>高度</label>
                         </a-col>
                         <a-col :span="16">
-                            <a-slider :min="1" :max="10" v-model="height" />
+                            <a-slider :min="1" :max="20" :defaultValue="2.7" :step="0.1" @change="changeHeight" @afterChange="refreshZone" />
                         </a-col>
                     </a-row>
-                </div>
-                <div class="zone-color">
                     <a-row>
-                        <a-col :span="8">
-                            <label for="screenColor">设置透明底色</label>
+                        <a-col :span="10">
+                            <label>模板停留时间</label>
                         </a-col>
-                        <a-col :span="16">
-                            <input type="color" id="screenColor" name="screenColor" v-model="screenColor">
+                        <a-col :span="10">
+                            <a-input-number :min="1" :max="20" v-model="duration" :defaultValue="8" :disabled="!isPreview" size="small" />秒
                         </a-col>
                     </a-row>
                 </div>
             </div>
-            <div class="zone" id="zone">
-                {{current_item}}
+            <div class="zone" id="zone" ref="zone" :style="{width:width + '%',height:height + '%',transform:leftOffset}">
+                <transition name="zone" enter-active-class="animated fadeInLeft" leave-active-class="animated fadeOutRight">
+                    <div class="content" v-show="isActive||isPreview">
+                        {{current_template}}
+                    </div>
+                </transition>
             </div>
         </div>
         
@@ -90,15 +91,19 @@ export default {
             lists:[],
             on_count:0,
             loading:false,
-            current_item:'预览区域',
+            current_template:'预览区域',
+            current_item:'',
             back_path:'',
             cur_page:1,
             pageSize:1,
             start:0,
             end:1,
-            width:0,
-            height:0,
-            screenColor:"",
+            width:60,
+            height:27,
+            offsetX:-50,
+            isActive:false,
+            isPreview:true,
+            duration:8,
         }
     },
     created(){
@@ -143,6 +148,9 @@ export default {
         },
         total(){
             return this.lists.length
+        },
+        leftOffset(){
+            return `translateX(${this.offsetX}%)`
         }
     },
     components:{
@@ -173,15 +181,26 @@ export default {
         },
         startListen(item){
             //其实可以不止监听关键词。。。
-            this.current_item=item.value.template
+            this.current_template = item.value.template
+            this.current_item = item
             item.disabled=true
+            this.isPreview = false
             let keyWord=item.value.keyWord
+            this.createZone(item)
+            //刷新白板
             hyExt.context.onBarrageChange({
                 content:keyWord
             }, barrageInfo => {
                 console.log(barrageInfo)
-                //创建白板
-                this.createZone(item)
+                //显示白板文字
+                //一段时间后文字消失
+                //给一个设置文字消失的间隔
+                this.isActive = true
+                // this.stopListen()
+                let delay = this.duration * 1000
+                setTimeout(() => {
+                    this.isActive = false
+                }, delay);
                 hyExt.logger.info('有新弹幕', barrageInfo)
             }).then(() => {
                 item.disabled=false
@@ -193,27 +212,25 @@ export default {
         },
         createZone(item){
             //停止监听弹幕
-            this.stopListen()
-            hyExt.stream.addZone(document.getElementById('zone')).then(() => {
+            hyExt.stream.addZone(this.$refs.zone,{screenColor:'#e9f5ff'}).then(() => {
                 hyExt.logger.info('创建白板成功')
-                setTimeout(() => {
-                    //删除白板
-                    //重新开始监听
-                    this.removeZone()
-                    this.startListen(item)
-                }, 8000);
             }).catch(err => {
                 hyExt.logger.warn('创建白板失败', err)
             })
         },
         stopListen(){
             //取消某个关键词监听
+            this.current_item = ''
+            this.isPreview = true
+            this.isActive = false
             this.$message.warning('监听已关闭')
             hyExt.context.offBarrageChange()
+            this.removeZone()
         },
-        removeZone(){
+        removeZone(callback){
             hyExt.stream.removeZone().then(() => {
                 hyExt.logger.info('删除白板成功')
+                callback()
             }).catch(err => {
                 hyExt.logger.warn('删除白板失败', err)
             })
@@ -241,9 +258,17 @@ export default {
             this.end = this.start + this.pageSize
             this.showLists(this.lists,this.start,this.end)
         },
-        addDelay(el){
-            el.style.animationDelay = ".5s"
+        changeWidth(value){
+            this.width = value*10
         },
+        changeHeight(value){
+            this.height = value*10
+        },
+        refreshZone(){
+            if(this.current_item){
+                this.removeZone(this.createZone)
+            }
+        }
     }
 }
 </script>
@@ -256,12 +281,12 @@ export default {
     @include flex-direction(column);
     width: 100%;
     height: 100%;
+    overflow-x: auto;
 }
 .list-wrapper{
     width:95%;
     height:80%;
     font-size:17px;
-    margin-top: 10px;
 }
 .list-wrapper .ant-row{
     border-top:1px solid rgb(95, 91, 91);
@@ -275,11 +300,8 @@ export default {
 }
 .zone{
     position:fixed;
-    width:60%;
-    height:27%;
     background-color: #e9f5ff80;
-    padding:50px 0;
-    transform: translate(30%,34%);
+    left:50%;
 }
 .loading{
     position:fixed;
@@ -288,8 +310,8 @@ export default {
     position: fixed;
     border: 1px dashed #5f5b5b;
     width: 93%;
-    height: 61%;
-    top: 37%;
+    height: 66%;
+    top: 33%;
 }
 .action-active:hover{
     cursor:pointer;
@@ -298,7 +320,7 @@ export default {
 }
 .pagination{
     position:fixed;
-    top:29%;
+    top:27%;
 }
 .zone-size label{
     display: inline-block;
@@ -308,10 +330,9 @@ export default {
     padding: 0 0 5px 0;
     border-bottom: 1px dashed #5f5b5b;
 }
-.zone-color{
+.content{
     position: relative;
-    left: 13px;
-    text-align: left;
+    top: 40%;
 }
 
 </style>
