@@ -6,6 +6,10 @@ export default class appStreamer extends Component {
     constructor(initialProps) {
         super();
         this.state={
+            isEmpty:true,
+            show:false,
+            introType:'',
+            intro_data:[],
             intro_msg:[
                 {
                     msg:"欢迎使用弹幕tools",
@@ -58,12 +62,35 @@ export default class appStreamer extends Component {
                     delay:5000
                 },
             ],
+            initial_color:new Animated.Value(0),
         }
         this.addAnim=this.addAnim.bind(this)
         
     }
 
     componentWillMount() {
+        hyExt.storage.getKeys().then(keys => {
+            hyExt.logger.info('获取成功', keys)
+            if(keys.length===0){
+                this.setState((state)=>{
+                    return {
+                        show:true,
+                        intro_data:state.intro_msg,
+                        introType:'intro'
+                    }
+                })
+            }else{
+                this.setState(()=>{
+                    return {
+                        show:true,
+                        isEmpty:false,
+                        introType:'templates'
+                    }
+                })
+            }
+        }).catch(err => {
+            hyExt.logger.warn('获取失败', err)
+        })
     }
 
     componentDidMount() {
@@ -81,22 +108,51 @@ export default class appStreamer extends Component {
         ).start()
     }
 
+    changeBackgroundColor(){
+        Animated.timing(
+            this.state.initial_color,
+            {
+                toValue:360,
+                duration:1000,
+            }
+        ).start(()=>this.changeBackgroundColor())
+    }
+
+    _goToAdd(){
+        console.log('创建')
+    }
+
+    _goToTemplates(){
+        console.log('查看')
+    }
+
     render() {
-        let { fadeAnim, intro_msg, delay } = this.state
+        let { fadeAnim, intro_msg } = this.state
+        // const interpolatedColorAnimation = this.initial_color.interpolate({
+        //     inputRange: [0, 360],
+        //   outputRange: ['rgba(255,255,255, 1)', 'rgba(51,156,177, 1)']
+        // })
         console.log(fadeAnim[0].value)
         return (
             <View style={[styles.wrapperStyle]}>
-                <View style={[styles.intro]}>
                 {
-                    intro_msg.map((item,idx)=>{
-                        this.addAnim(item.id)
-                        return(
-                            <Animated.Text key={item.id} style={{opacity:fadeAnim[item.id].value}}>{item.msg}</Animated.Text>
-                        )
-                    })
+                    this.state.isEmpty?(
+                        <View style={[styles.intro]}>
+                        {
+                            
+                            intro_msg.map((item,idx)=>{
+                                this.addAnim(item.id)
+                                return(
+                                    <Animated.Text key={item.id} style={{opacity:fadeAnim[item.id].value}}>{item.msg}</Animated.Text>
+                                )
+                            })
+                        }
+                        </View>
+                    ):(
+                        <Button title="查看模板列表" onPress={this._goToTemplates} />
+                    )
                 }
-                </View>
-                <Button title="创建模板"></Button>
+                <Button title="创建模板" onPress={this._goToAdd} />
             </View>
         )
     }
