@@ -27,7 +27,7 @@ export default {
   color: #2c3e50;
   width:100%;
   height:100%;
-  background-image: linear-gradient(315deg, #FFFD91 0%, #FFA591 100%);
+  background-image: linear-gradient(315deg, #F9EADA 0%, #D2FCE3 100%);
   animation: hue 60s infinite linear;
   -webkit-animation: hue 60s infinite linear;
   text-shadow: 1px 0 1px black;

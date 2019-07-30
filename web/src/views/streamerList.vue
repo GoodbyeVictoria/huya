@@ -39,7 +39,7 @@
             </transition>
         </div>
         <div class="pagination" v-show="!loading">
-            <a-pagination simple v-model="cur_page" :pageSize="pageSize" :total=total @change="page_onChange" />
+            <a-pagination simple size="small" v-model="cur_page" :pageSize="pageSize" :total=total @change="page_onChange" />
         </div>
         <div class="preview">
             <div class="edit-zone">
@@ -49,7 +49,7 @@
                             <label>宽度</label>
                         </a-col>
                         <a-col :span="16">
-                            <a-slider :min="1" :max="20" :defaultValue="6.0" :step="0.1" @change="changeWidth" @afterChange="refreshZone" />
+                            <a-slider :min="1" :max="10" :defaultValue="6.0" :step="0.1" @change="changeWidth" @afterChange="refreshZone" />
                         </a-col>
                     </a-row>
                     <a-row>
@@ -57,7 +57,7 @@
                             <label>高度</label>
                         </a-col>
                         <a-col :span="16">
-                            <a-slider :min="1" :max="20" :defaultValue="2.7" :step="0.1" @change="changeHeight" @afterChange="refreshZone" />
+                            <a-slider :min="1" :max="10" :defaultValue="6.0" :step="0.1" @change="changeHeight" @afterChange="refreshZone" />
                         </a-col>
                     </a-row>
                     <a-row>
@@ -65,7 +65,7 @@
                             <label>模板停留时间</label>
                         </a-col>
                         <a-col :span="10">
-                            <a-input-number :min="1" :max="20" v-model="duration" :defaultValue="8" :disabled="!isPreview" size="small" />秒
+                            <a-input-number :min="1" :max="20" v-model="duration" :defaultValue="8" :disabled="!isPreview" size="small" /> 秒
                         </a-col>
                     </a-row>
                 </div>
@@ -99,7 +99,7 @@ export default {
             start:0,
             end:1,
             width:60,
-            height:27,
+            height:27.6,
             offsetX:-50,
             isActive:false,
             isPreview:true,
@@ -110,17 +110,6 @@ export default {
         this.loading=true
         // let isOn=false
         let isOn=true
-        //判断有没有开播
-        //给一个重新刷新页面的按钮
-        // hyExt.context.getLiveInfo().then(liveInfo => {
-        //     hyExt.logger.info('liveInfo', liveInfo)
-        //     this.loading=false;
-        //     if(liveInfo.isOn){
-        //         isOn=true
-        //     }
-        // }).catch(err => {
-        //     hyExt.logger.warn('get liveInfo failed', err)
-        // })
          //获取模板数据，拼成要用的样子
         hyExt.storage.getKeys().then(keys=>{
             hyExt.logger.info('获取成功', keys)
@@ -259,10 +248,10 @@ export default {
             this.showLists(this.lists,this.start,this.end)
         },
         changeWidth(value){
-            this.width = value*10
+            this.width = value*9.3
         },
         changeHeight(value){
-            this.height = value*10
+            this.height = value*4.6
         },
         refreshZone(){
             if(this.current_item){
@@ -292,7 +281,7 @@ export default {
     border-top:1px solid rgb(95, 91, 91);
     border-bottom: 1px solid rgb(95, 91, 91);
     margin:-1px 0 -1px 0;
-    padding:6px 0px;
+    padding:3px 0px;
     div{
         background: transparent;
         border: 0;
@@ -320,7 +309,7 @@ export default {
 }
 .pagination{
     position:fixed;
-    top:27%;
+    top:25%;
 }
 .zone-size label{
     display: inline-block;
@@ -333,6 +322,13 @@ export default {
 .content{
     position: relative;
     top: 40%;
+}
+.zone-size .ant-input-number {
+    margin-top: 5px;
+    width:65px;
+}
+.pagination .ant-pagination {
+    margin-top:-3px;
 }
 
 </style>
