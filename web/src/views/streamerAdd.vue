@@ -132,6 +132,9 @@ export default {
     transition: all 0.3s, height 0s;
     min-height: 32px;
  }
+ .streamerMain .ant-btn-primary{
+     width:30%;
+ }
 </style>
 
 

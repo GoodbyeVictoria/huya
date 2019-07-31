@@ -5,42 +5,52 @@
             <a-spin size="large"></a-spin>
         </div>
         <div class="list-wrapper">
-            <a-row>
-                <a-col :span="6"><div>标题</div></a-col>
-                <a-col :span="6"><div>关键字</div></a-col>
-                <a-col :span="6"><div>操作</div></a-col>
-                <a-col :span="6"><div>off/on</div></a-col>
-            </a-row>
+            <transition name="left-arrow" enter-active-class="animated fadeInLeft fast">
+                <div v-show="lists.length > 0">
+                    <a-icon type="left" />
+                </div>
+            </transition>
             <transition name="list-tran" enter-active-class="animated fadeInLeft fast" leave-active-class="animated fadeOutRight fast" mode="out-in">
                 <template v-for="item in showLists(lists,start,end)">
-                    <a-row :key="item.key">
-                        <a-col :span="6"><div>{{item.value.title}}</div></a-col>
-                        <a-col :span="6"><div>{{item.value.keyWord}}</div></a-col>
-                        <a-col :span="6">
-                            <a-dropdown>
-                                <a class="ant-dropdown-link" href="#">编辑</a>
-                                <a-menu slot="overlay">
-                                    <a-menu-item>
-                                        <a href="javascript:;" @click="goToUpdate(item)">修改</a>
-                                    </a-menu-item>
-                                    <a-menu-item>
-                                        <a href="javascript:;" @click="removeItem(item)">删除</a>
-                                    </a-menu-item>
-                                </a-menu>
-                            </a-dropdown>
-                        </a-col>
-                        <a-col :span="6">
-                            <div>
-                                <a-switch :checked="item.checked" :disabled="item.disabled" @change='onChange(item)' style="margin-bottom:2px" />
-                            </div>
-                        </a-col>
-                    </a-row>
+                    <div :key="item.key" class="item-wrapper">
+                        <a-row>
+                            <a-col :span="16"><div>{{item.value.title}}</div></a-col>
+                            <a-col :span="6" :offset="2">
+                                <div style="margin-bottom:4px;text-align:right;">
+                                    <a-switch :checked="item.checked" :disabled="item.disabled" @change='onChange(item)'  />
+                                </div>
+                            </a-col>
+                        </a-row>
+                        <a-row>
+                            <a-col :span="6"><div>{{item.value.keyWord}}</div></a-col>
+                        </a-row>
+                        <a-row>
+                            <a-col :span="6">
+                                <a-dropdown>
+                                    <a class="ant-dropdown-link" href="#">编辑</a>
+                                    <a-menu slot="overlay">
+                                        <a-menu-item>
+                                            <a href="javascript:;" @click="goToUpdate(item)">修改</a>
+                                        </a-menu-item>
+                                        <a-menu-item>
+                                            <a href="javascript:;" @click="removeItem(item)">删除</a>
+                                        </a-menu-item>
+                                    </a-menu>
+                                </a-dropdown>
+                            </a-col>
+                        </a-row>
+                    </div>
                 </template>
             </transition>
+            <transition name="right-arrow" enter-active-class="animated fadeInLeft fast">
+                <div v-show="lists.length > 0">
+                    <a-icon type="right" />
+                </div>
+            </transition>
         </div>
-        <div class="pagination" v-show="!loading">
+        <!-- <div class="pagination" v-show="!loading">
             <a-pagination simple size="small" v-model="cur_page" :pageSize="pageSize" :total=total @change="page_onChange" />
-        </div>
+        </div> -->
         <div class="preview">
             <div class="edit-zone">
                 <div class="zone-size">
@@ -101,6 +111,7 @@ export default {
             width:60,
             height:27.6,
             offsetX:-50,
+            offsetY:-20,
             isActive:false,
             isPreview:true,
             duration:8,
@@ -139,7 +150,7 @@ export default {
             return this.lists.length
         },
         leftOffset(){
-            return `translateX(${this.offsetX}%)`
+            return `translate(${this.offsetX}%,${this.offsetY}%)`
         }
     },
     components:{
@@ -273,34 +284,51 @@ export default {
     overflow-x: auto;
 }
 .list-wrapper{
+    position: fixed;
+    @include flexCenter;
     width:95%;
-    height:80%;
+    top:9%;
     font-size:17px;
 }
 .list-wrapper .ant-row{
-    border-top:1px solid rgb(95, 91, 91);
-    border-bottom: 1px solid rgb(95, 91, 91);
+    // border-top:1px solid rgb(95, 91, 91);
+    // border-bottom: 1px solid rgb(95, 91, 91);
     margin:-1px 0 -1px 0;
     padding:3px 0px;
+    letter-spacing: 2px;
     div{
         background: transparent;
         border: 0;
+    }
+    &:nth-child(1){
+        font-size:21px;
+        letter-spacing: 3px;
+        font-weight:500;
+    }
+    &:nth-child(2){
+        font-size:15px
+    }
+    &:nth-child(3){
+        font-size:15px
     }
 }
 .zone{
     position:fixed;
     background-color: #e9f5ff80;
     left:50%;
+    top: 62%;
 }
 .loading{
     position:fixed;
 }
 .preview{
     position: fixed;
-    border: 1px dashed #5f5b5b;
     width: 93%;
     height: 66%;
     top: 33%;
+    background: #fafafa94;
+    border-radius: 17px;
+    box-shadow: 1px 1px 6px 1px #0000001f;
 }
 .action-active:hover{
     cursor:pointer;
@@ -317,7 +345,6 @@ export default {
 }
 .edit-zone{
     padding: 0 0 5px 0;
-    border-bottom: 1px dashed #5f5b5b;
 }
 .content{
     position: relative;
@@ -329,6 +356,15 @@ export default {
 }
 .pagination .ant-pagination {
     margin-top:-3px;
+}
+.item-wrapper{
+    text-align: left;
+    width: 80%;
+    margin: 0 auto;
+    padding: 10px 17px;
+    background: #fafafa94;
+    border-radius: 17px;
+    box-shadow: 1px 1px 6px 1px #0000001f;
 }
 
 </style>

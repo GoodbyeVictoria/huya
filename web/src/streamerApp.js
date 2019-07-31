@@ -22,7 +22,7 @@ Vue.use(Pagination)
 Vue.use(Slider)
 Vue.use(InputNumber)
 message.config({
-  top: `52px`,
+  top: `32px`,
   duration: 2,
   maxCount: 3,
 });

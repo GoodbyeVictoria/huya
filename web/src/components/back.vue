@@ -1,6 +1,7 @@
 <template>
     <div class="top"  @click="goBack">
-        <a-icon type="left-circle" theme="twoTone" twoToneColor="#FFA591" />{{content}}
+        <!-- <a-icon type="left" theme="twoTone" twoToneColor="#FFA591" />{{content}} -->
+        <a-icon type="arrow-left" />
     </div>
 </template>
 
@@ -16,11 +17,14 @@ export default {
 </script>
 <style scoped>
 .top{
-    font-size: 16px;
+    font-size: 17px;
     position: fixed;
-    top: 9px;
-    left: 5px;
-    cursor:pointer;
+    top: 11px;
+    left: 8px;
+    width: 14%;
+    cursor: pointer;
+    box-shadow: 1px 1px 6px 1px #0000001f;
+    border-radius: 14px;
  }
 </style>
 
