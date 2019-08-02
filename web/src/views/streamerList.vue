@@ -1,120 +1,54 @@
 <template>
     <div class="streamerList">
-        <back :path="back_path" content="返回主页"></back>
+        <!-- <back :path="back_path" content="返回主页"></back> -->
         <div v-show="loading" class="loading">
             <a-spin size="large"></a-spin>
         </div>
         <div class="list-wrapper">
-            <transition name="left-arrow" enter-active-class="animated fadeInLeft fast">
-                <div v-show="lists.length > 0">
-                    <a-icon type="left" />
-                </div>
-            </transition>
-            <transition name="list-tran" enter-active-class="animated fadeInLeft fast" leave-active-class="animated fadeOutRight fast" mode="out-in">
-                <template v-for="item in showLists(lists,start,end)">
-                    <div :key="item.key" class="item-wrapper">
-                        <a-row>
-                            <a-col :span="16"><div>{{item.value.title}}</div></a-col>
-                            <a-col :span="6" :offset="2">
-                                <div style="margin-bottom:4px;text-align:right;">
-                                    <a-switch :checked="item.checked" :disabled="item.disabled" @change='onChange(item)'  />
-                                </div>
-                            </a-col>
-                        </a-row>
-                        <a-row>
-                            <a-col :span="6"><div>{{item.value.keyWord}}</div></a-col>
-                        </a-row>
-                        <a-row>
-                            <a-col :span="6">
-                                <a-dropdown>
-                                    <a class="ant-dropdown-link" href="#">编辑</a>
-                                    <a-menu slot="overlay">
-                                        <a-menu-item>
-                                            <a href="javascript:;" @click="goToUpdate(item)">修改</a>
-                                        </a-menu-item>
-                                        <a-menu-item>
-                                            <a href="javascript:;" @click="removeItem(item)">删除</a>
-                                        </a-menu-item>
-                                    </a-menu>
-                                </a-dropdown>
-                            </a-col>
-                        </a-row>
-                    </div>
-                </template>
-            </transition>
-            <transition name="right-arrow" enter-active-class="animated fadeInLeft fast">
-                <div v-show="lists.length > 0">
-                    <a-icon type="right" />
-                </div>
-            </transition>
-        </div>
-        <!-- <div class="pagination" v-show="!loading">
-            <a-pagination simple size="small" v-model="cur_page" :pageSize="pageSize" :total=total @change="page_onChange" />
-        </div> -->
-        <div class="preview">
-            <div class="edit-zone">
-                <div class="zone-size">
+            <transition-group name="list-tran" enter-active-class="animated fadeInUp fast" leave-active-class="animated fadeOutUp fast">
+                <div :key="item.key" v-for="item in lists" class="item-wrapper">
                     <a-row>
-                        <a-col :span="6">
-                            <label>宽度</label>
+                        <a-col :span="16"><div>{{item.value.title}}</div></a-col>
+                        <a-col :span="6" :offset="2">
+                            <div style="margin-bottom:4px;text-align:right;">
+                                <a-switch :checked="item.checked" :disabled="item.disabled" @change='onChange(item)'  />
+                            </div>
                         </a-col>
-                        <a-col :span="16">
-                            <a-slider :min="1" :max="10" :defaultValue="6.0" :step="0.1" @change="changeWidth" @afterChange="refreshZone" />
-                        </a-col>
+                    </a-row>
+                    <a-row>
+                        <a-col :span="6"><div>{{item.value.keyWord}}</div></a-col>
                     </a-row>
                     <a-row>
                         <a-col :span="6">
-                            <label>高度</label>
-                        </a-col>
-                        <a-col :span="16">
-                            <a-slider :min="1" :max="10" :defaultValue="6.0" :step="0.1" @change="changeHeight" @afterChange="refreshZone" />
-                        </a-col>
-                    </a-row>
-                    <a-row>
-                        <a-col :span="10">
-                            <label>模板停留时间</label>
-                        </a-col>
-                        <a-col :span="10">
-                            <a-input-number :min="1" :max="20" v-model="duration" :defaultValue="8" :disabled="!isPreview" size="small" /> 秒
+                            <a-dropdown>
+                                <a class="ant-dropdown-link" href="#">编辑</a>
+                                <a-menu slot="overlay">
+                                    <a-menu-item>
+                                        <a href="javascript:;" @click="goToUpdate(item)">修改</a>
+                                    </a-menu-item>
+                                    <a-menu-item>
+                                        <a href="javascript:;" @click="removeItem(item)">删除</a>
+                                    </a-menu-item>
+                                </a-menu>
+                            </a-dropdown>
                         </a-col>
                     </a-row>
                 </div>
-            </div>
-            <div class="zone" id="zone" ref="zone" :style="{width:width + '%',height:height + '%',transform:leftOffset}">
-                <transition name="zone" enter-active-class="animated fadeInLeft" leave-active-class="animated fadeOutRight">
-                    <div class="content" v-show="isActive||isPreview">
-                        {{current_template}}
-                    </div>
-                </transition>
-            </div>
+            </transition-group>
         </div>
-        
+        <!-- <bottomBar></bottomBar> -->
     </div>
 </template>
 
 <script>
 import back from './../components/back'
+import bottomBar from './../components/bottomBar'
 
 export default {
     data(){
         return{
             lists:[],
-            on_count:0,
-            loading:false,
-            current_template:'预览区域',
-            current_item:'',
-            back_path:'',
-            cur_page:1,
-            pageSize:1,
-            start:0,
-            end:1,
-            width:60,
-            height:27.6,
-            offsetX:-50,
-            offsetY:-20,
-            isActive:false,
-            isPreview:true,
-            duration:8,
+            back_path:''
         }
     },
     created(){
@@ -143,18 +77,10 @@ export default {
         })
     },
     computed:{
-        show_lists(){
-            return this.lists.slice(0,this.pageSize)
-        },
-        total(){
-            return this.lists.length
-        },
-        leftOffset(){
-            return `translate(${this.offsetX}%,${this.offsetY}%)`
-        }
+        
     },
     components:{
-        back
+        back,bottomBar
     },
     methods:{
         onChange(item){
@@ -180,7 +106,6 @@ export default {
             },0)
         },
         startListen(item){
-            //其实可以不止监听关键词。。。
             this.current_template = item.value.template
             this.current_item = item
             item.disabled=true
@@ -210,65 +135,9 @@ export default {
                 hyExt.logger.warn('监听失败', err)
             })
         },
-        createZone(item){
-            //停止监听弹幕
-            hyExt.stream.addZone(this.$refs.zone,{screenColor:'#e9f5ff'}).then(() => {
-                hyExt.logger.info('创建白板成功')
-            }).catch(err => {
-                hyExt.logger.warn('创建白板失败', err)
-            })
+        gotoStart(item){
+            this.$router.push('/main')
         },
-        stopListen(){
-            //取消某个关键词监听
-            this.current_item = ''
-            this.isPreview = true
-            this.isActive = false
-            this.$message.warning('监听已关闭')
-            hyExt.context.offBarrageChange()
-            this.removeZone()
-        },
-        removeZone(callback){
-            hyExt.stream.removeZone().then(() => {
-                hyExt.logger.info('删除白板成功')
-                callback()
-            }).catch(err => {
-                hyExt.logger.warn('删除白板失败', err)
-            })
-        },
-        goToUpdate(item){
-            this.$store.commit('getItem',{item:item})
-            this.$router.push(`/update/${item.key}`)
-        },
-        removeItem(item){
-            let pos=this.lists.map(ele=>ele.key).indexOf(item.key)
-            console.log(pos)
-            this.lists.splice(pos,1)
-            //removeItem
-            hyExt.storage.removeItem(item.key).then(()=>{
-                hyExt.logger.info('删除item成功')
-            }).catch(err=>{
-                hyExt.logger.warn('删除item失败', err)
-            })
-        },
-        showLists(lists,start,end){
-            return lists.slice(start,end)
-        },
-        page_onChange(page){
-            this.start = (page-1) * this.pageSize
-            this.end = this.start + this.pageSize
-            this.showLists(this.lists,this.start,this.end)
-        },
-        changeWidth(value){
-            this.width = value*9.3
-        },
-        changeHeight(value){
-            this.height = value*4.6
-        },
-        refreshZone(){
-            if(this.current_item){
-                this.removeZone(this.createZone)
-            }
-        }
     }
 }
 </script>
@@ -281,90 +150,72 @@ export default {
     @include flex-direction(column);
     width: 100%;
     height: 100%;
-    overflow-x: auto;
-}
-.list-wrapper{
-    position: fixed;
-    @include flexCenter;
-    width:95%;
-    top:9%;
-    font-size:17px;
-}
-.list-wrapper .ant-row{
-    // border-top:1px solid rgb(95, 91, 91);
-    // border-bottom: 1px solid rgb(95, 91, 91);
-    margin:-1px 0 -1px 0;
-    padding:3px 0px;
-    letter-spacing: 2px;
-    div{
-        background: transparent;
-        border: 0;
+    .list-wrapper{
+        @include flexbox;
+        @include justify-content();
+        @include flex-direction(column);
+        overflow-x: auto;
+        width:100%;
+        height: 85%;
+        margin-top: -2%;
+        font-size:17px;
+        .ant-row{
+            margin:-1px 0 -1px 0;
+            padding:3px 0px;
+            letter-spacing: 2px;
+            div{
+                background: transparent;
+                border: 0;
+            }
+            &:nth-child(1){
+                font-size:21px;
+                letter-spacing: 3px;
+                font-weight:500;
+            }
+            &:nth-child(2){
+                font-size:15px
+            }
+            &:nth-child(3){
+                font-size:15px
+            }
+        }
+        .item-wrapper {
+            text-align: left;
+            width: 73%;
+            height: 16%;
+            margin: 4% auto;
+            padding: 10px 17px;
+            background: #fafafa94;
+            border-radius: 17px;
+            box-shadow: 1px 1px 6px 1px #0000001f;
+            transform:scale(1.0);
+            transition:all 0.5s;
+            &:hover{
+                transform:scale(1.04);
+                transition:all 0.5s;
+                cursor:pointer;
+            }
+        }
     }
-    &:nth-child(1){
-        font-size:21px;
-        letter-spacing: 3px;
-        font-weight:500;
+    ::-webkit-scrollbar {
+        background-color: #e8e8e8;
+        width: 10px;
+        background-clip: padding-box;
+        border-radius: 7px;
     }
-    &:nth-child(2){
-        font-size:15px
-    }
-    &:nth-child(3){
-        font-size:15px
+    ::-webkit-scrollbar-thumb {
+        background-color: #fafafae0;
+        border-radius: 7px;
     }
 }
-.zone{
-    position:fixed;
-    background-color: #e9f5ff80;
-    left:50%;
-    top: 62%;
-}
+
 .loading{
     position:fixed;
-}
-.preview{
-    position: fixed;
-    width: 93%;
-    height: 66%;
-    top: 33%;
-    background: #fafafa94;
-    border-radius: 17px;
-    box-shadow: 1px 1px 6px 1px #0000001f;
 }
 .action-active:hover{
     cursor:pointer;
     color:brown;
     text-decoration: underline;
-}
-.pagination{
-    position:fixed;
-    top:25%;
-}
-.zone-size label{
-    display: inline-block;
-    padding: 7px;
-}
-.edit-zone{
-    padding: 0 0 5px 0;
-}
-.content{
-    position: relative;
-    top: 40%;
-}
-.zone-size .ant-input-number {
-    margin-top: 5px;
-    width:65px;
-}
-.pagination .ant-pagination {
-    margin-top:-3px;
-}
-.item-wrapper{
-    text-align: left;
-    width: 80%;
-    margin: 0 auto;
-    padding: 10px 17px;
-    background: #fafafa94;
-    border-radius: 17px;
-    box-shadow: 1px 1px 6px 1px #0000001f;
 }
 
 </style>
