@@ -1,22 +1,25 @@
 <template>
     <div class="streamerHome">
-        <transition name="button-ani" enter-active-class="animatied zoomIn">
-            <div v-if="!isEmpty">
+        <!-- <transition name="button-ani" enter-active-class="animatied zoomIn">
+            <div>
                 <div class="button" @click="goToList">查看模板列表</div>
             </div>
-        </transition>
-        <div v-if="isEmpty" class="intro-wrapper">
+        </transition> -->
+        <!-- <div v-if="isEmpty" class="intro-wrapper">
             <transition-group name="fade-ani" tag="div" enter-active-class="animated fadeInDown"  leave-active-class="animated fadeOutRight" @after-enter="addAnim">
                 <div v-for="ele in intro_data" :key="ele.id" :class="[introType,anim]" :style="delay[ele.id]">
                     {{ele.msg}}
                 </div>
             </transition-group>
-        </div>
-        <transition name="button-ani" enter-active-class="animatied zoomIn">
-            <div v-show="show">
+        </div> -->
+        <!-- <transition name="button-ani" enter-active-class="animatied zoomIn">
+            <div>
                 <div class="button" @click="goToAdd">创 建 模 板</div>
             </div>
-        </transition>
+        </transition> -->
+        <div class="button" @click="goToList">查看模板列表</div>
+        <div class="button" @click="goToAdd">创建弹幕模板</div>
+        <div class="button" @click="goToGift">创建礼物模板</div>
     </div>
 </template>
 
@@ -81,6 +84,9 @@ export default {
         goToList(){
             this.$router.push('/list')
         },
+        goToGift(){
+            this.$router.push('/addGift')
+        },
     },
     mounted(){
         hyExt.storage.getKeys().then(keys => {
@@ -115,7 +121,7 @@ export default {
 
 @keyframes twink {
     50%{
-        box-shadow:0px 1px 13px 7px #000000a3;
+        box-shadow:0px 1px 13px 7px #0000001f;
     }
 }
 @keyframes upDown{
@@ -140,9 +146,9 @@ export default {
     height: 52px;
     text-align: center;
     padding: 13px;
-    background-color: rgba(245, 34, 45, 0.2);
-    box-shadow: 0px 1px 13px 5px #000000a3;
-    border-radius: 19px;
+    background-color: #fafafa94;
+    box-shadow: 1px 1px 6px 1px #0000001f;
+    border-radius: 10px;
     font-size: 19px;
     text-shadow: 1px 0 1px rgba(0, 0, 0, 0.99);
     animation: twink 3s infinite;
@@ -151,10 +157,10 @@ export default {
     transition:all 1s;
     margin-bottom: 25px;
     margin-top: 25px;
-}
-.button:hover{
-    transform:scale(1.07);
-    transition:all 1s;
+    &:hover {
+        transform:scale(1.07);
+        transition:all 1s;
+    }
 }
 
 </style>
