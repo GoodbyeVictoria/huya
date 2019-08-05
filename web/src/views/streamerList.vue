@@ -47,13 +47,14 @@
 </template>
 
 <script>
-import { mapState,mapActions  } from 'vuex'
+import { mapState,mapActions,mapMutations,mapGetters } from 'vuex'
 
 export default {
     data(){
         return{
-            loading:'',
-            back_path:'',
+            cur_temp:'',
+            gift_coming:false,
+            danmu_coming:false,
         }
     },
     created(){
@@ -87,14 +88,24 @@ export default {
         },
         ...mapState([
             'lists',
-            'cur_lists',
             'duration',
-            'boardExit',
+            'boardExist',
+            'cur_lists'
         ]),
+        ...mapGetters([
+            'showTemplates'
+        ])
     },
     components:{
     },
     methods:{
+        ...mapMutations([
+            'changeActive',
+            'changePreview',
+            'setCurTemp',
+            'setBoardExist',
+            'addCurLists'
+        ]),
         ...mapActions([
             'getLists',
             'removeItem',
@@ -119,9 +130,9 @@ export default {
                 }else{
                     item.checked=!item.checked
                     if(item.checked){
-                        // this.startListen(item)
+                        this.startListen(item)
                     }else{
-                        // this.stopListen()
+                        this.stopListen()
                         //删掉白板
                     }
                 }
@@ -138,29 +149,35 @@ export default {
             this.removeItem(item)
         },
         startListen(item){
-            this.cur_lists.push(item)
-            this.current_template = item.value.template
-            this.current_item = item
             item.disabled=true
-            this.isPreview = false
+            this.changePreview({isPreview: false})
             let keyWord=item.value.keyWord
-            // this.createZone(item)
-            //刷新白板
             hyExt.context.onBarrageChange({
                 content:keyWord
             }, barrageInfo => {
                 console.log(barrageInfo)
+                this.cur_temp = item.value.template
+                if(!item.value.isGift){
+                    this.addCurLists({temp: item.value.template})
+                    // this.cur_lists.push(item.value.template)
+                }
                 //显示白板文字
                 //一段时间后文字消失
                 //给一个设置文字消失的间隔
-                this.isActive = true
-                let delay = this.duration * 1000
-                setTimeout(() => {
-                    this.isActive = false
-                }, delay);
-                hyExt.logger.info('有新弹幕', barrageInfo)
+                // if(this.cur_lists.length<=1){
+                // }
+                // this.setCurTemp({cur_temp: item.value.template})
+                // this.changeActive({isActive: true})
+                // // this.isActive = true
+                // let delay = this.duration * 1000
+                // setTimeout(() => {
+                //     this.changeActive({isActive: false})
+                //     // this.isActive = false
+                // }, delay);
+                // hyExt.logger.info('有新弹幕', barrageInfo)  
             }).then(() => {
                 item.disabled=false
+                this.setBoardExist({exist: true})
                 //gotoMain
                 this.gotoMain()
                 this.$message.success('开始监听', 1)
@@ -170,13 +187,9 @@ export default {
             })
         },
         startListenGift(item){
-            this.cur_lists.push(item)
-            this.current_template = item.value.template
-            this.current_item = item
             item.disabled=true
-            this.isPreview = false
+            this.changePreview({isPreview: false})
             let keyWord=item.value.keyWord
-            console.log(keyWord)
             hyExt.context.onGiftChange({
                 itemName: keyWord
             }, giftInfo => {
@@ -184,44 +197,68 @@ export default {
                 let { sendNick, sendItemCount, sendItemComboHits, itemName } = giftInfo
                 let template = ``
                 if(sendItemComboHits == 0){
-                    template = `感谢${sendNick}送的${sendItemCount}个${itemName}！`
+                    template = `感谢${sendNick}送的${sendItemCount}个${itemName}！${item.value.template}`
                 }else{
-                    template = `感谢${sendNick}送的${sendItemComboHits}组${itemName}！`
+                    template = `感谢${sendNick}送的${sendItemComboHits}组${itemName}！${item.value.template}`
+                }
+                if(item.value.isGift){
+                    this.addCurLists({temp: template})
+                    // this.cur_lists.push(template)
                 }
                 //同步到vuex
-                console.log(giftInfo)
-                this.isActive = true
-                let delay = this.duration * 1000
-                setTimeout(() => {
-                    this.isActive = false
-                }, delay);
-
+                // this.setCurTemp({cur_temp: template})
+                // console.log(giftInfo)
+                // this.changeActive({isActive: true})
+                // // this.isActive = true
+                // let delay = this.duration * 1000
+                // setTimeout(() => {
+                //     this.changeActive({isActive: false})
+                //     // this.isActive = false
+                // }, delay);
+                
             }).then(() => {
                 item.disabled=false
                 //gotoMain
-                // this.gotoMain()
+                this.setBoardExist({exist: true})
+                this.gotoMain()
                 this.$message.success('开始监听', 1)
                 hyExt.logger.info('监听成功')
             }).catch(err => {
                 hyExt.logger.warn('监听失败', err)
             })
         },
+        //写在vuex的计算属性里
         stopListenGift(){
-            this.current_item = ''
-            this.isPreview = true
-            this.isActive = false
+            this.changePreview({isPreview: true})
+            // this.isPreview = true
+            this.changeActive({isActive: false})
+            // this.isActive = false
             this.$message.warning('监听已关闭')
             hyExt.context.offGiftChange()
-            // this.removeZone()
+            //不一定remove
+            this.removeZone()
         },
         stopListen(){
             //取消某个关键词监听
-            this.current_item = ''
-            this.isPreview = true
-            this.isActive = false
+            this.changePreview({isPreview: true})
+            // this.isPreview = true
+            this.changeActive({isActive: false})
+            // this.isActive = false
             this.$message.warning('监听已关闭')
             hyExt.context.offBarrageChange()
-            // this.removeZone()
+            //不一定remove
+            this.removeZone()
+        },
+        removeZone(){
+            if(this.boardExist){
+                hyExt.stream.removeZone().then(() => {
+                    hyExt.logger.info('删除白板成功')
+                    this.setBoardExist({exist: false})
+                }).catch(err => {
+                    hyExt.logger.warn('删除白板失败', err)
+                })
+            }
+            
         },
     }
 }

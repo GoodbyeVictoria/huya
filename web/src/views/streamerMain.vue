@@ -30,7 +30,7 @@
                             <label>模板停留时间</label>
                         </a-col>
                         <a-col :span="10">
-                            <a-input-number :min="1" :max="20" v-model="duration" :defaultValue="8" :disabled="!isPreview" size="small" /> 秒
+                            <a-input-number :min="1" :max="20" v-model="duration" :defaultValue="8" :disabled="!isPreview" size="small" @change="setDuration" /> 秒
                         </a-col>
                     </a-row>
                 </div>
@@ -54,8 +54,6 @@ import { mapState,mapActions  } from 'vuex'
 export default {
     data(){
         return{
-            current_template:'预览区域',
-            current_item:'',
             width:60,
             height:27.6,
             offsetX:-50,
@@ -67,6 +65,9 @@ export default {
         // let isOn=false
          //获取模板数据，拼成要用的样子
          this.$store.commit('setDuration',{duration:this.duration})
+         if(!this.boardExist){
+             this.createZone()
+         }
         
     },
     computed:{
@@ -76,32 +77,15 @@ export default {
         ...mapState([
             'isActive',
             'isPreview',
+            'current_template',
+            'boardExist'
         ]),
     },
     components:{
     },
     methods:{
-        onChange(item){
-            if(this.on_count>=1&&!item.checked){
-                this.$message.warning('只能监听一个哦')
-            }else{
-                item.checked=!item.checked
-                this.listen_count()
-                if(item.checked){
-                    this.startListen(item)
-                }else{
-                    this.stopListen()
-                    //删掉白板
-                }
-            }
-        },
-        listen_count(){
-            this.on_count = this.lists.reduce((acc,cur)=>{
-                if(cur.checked){
-                    acc++
-                }
-                return acc
-            },0)
+        setDuration(value){
+            this.$store.commit('setDuration',{duration:this.duration})
         },
         createZone(item){
             //停止监听弹幕
@@ -126,7 +110,7 @@ export default {
             this.height = value*4.6
         },
         refreshZone(){
-            if(this.current_item){
+            if(this.boardExist){
                 this.removeZone(this.createZone)
             }
         }

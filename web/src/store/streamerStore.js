@@ -12,10 +12,29 @@ const store=new Vuex.Store({
         duration:'',
         isActive:false,
         isPreview:true,
-        boardExit:false,
+        boardExist:false,
+        current_template:'预览区域',
     },
     getters:{
-        lists_length:state=>state.lists.length
+        lists_length:state=>state.lists.length,
+        showTemplates:state=>{
+            console.log(state.cur_lists)
+            while(state.cur_lists.length>=1){
+                let first = state.cur_lists[0]
+                state.isActive = true
+                state.current_template = first
+                // this.setCurTemp({cur_temp: first})
+                // this.changeActive({isActive: true})
+                // this.isActive = true
+                let delay = this.duration * 1000
+                setTimeout(() => {
+                    state.isActive = false
+                    // this.changeActive({isActive: false})
+                    // this.isActive = false
+                    state.cur_lists.pop()
+                }, delay);
+            }
+        }
     },
     mutations:{
         setLists(state,payload){
@@ -24,8 +43,12 @@ const store=new Vuex.Store({
         getLists(state,payload){
             state.lists.push(payload.obj)
         },
-        setCurLists(state,payload){
-            state.cur_lists=payload.cur_lists
+        addCurLists(state,payload){
+            state.cur_lists.push(payload.temp)
+            console.log(state.cur_lists)
+        },
+        popCurLists(state){
+            state.cur_lists.pop()
         },
         getItem(state,payload){
             let key=payload.item.key
@@ -48,7 +71,19 @@ const store=new Vuex.Store({
         },
         setDuration(state,payload){
             state.duration = payload.duration
-        }
+        },
+        setCurTemp(state,payload){
+            state.current_template = payload.cur_temp
+        },
+        changeActive(state,payload){
+            state.isActive = payload.isActive
+        },
+        changePreview(state,payload){
+            state.isPreview = payload.isPreview
+        },
+        setBoardExist(state,payload){
+            state.boardExist = payload.exist
+        },
     },
     actions:{
         getLists({ commit }){
