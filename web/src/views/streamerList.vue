@@ -1,7 +1,6 @@
 <template>
     <div class="streamerList">
-        <!-- <back :path="back_path" content="返回主页"></back> -->
-        <div v-show="loading" class="loading">
+        <div v-show="lists.length <= 0" class="loading">
             <a-spin size="large"></a-spin>
         </div>
         <div class="list-wrapper">
@@ -16,7 +15,7 @@
                         </a-col>
                     </a-row>
                     <a-row>
-                        <a-col :span="6"><div>{{item.value.keyWord}}</div></a-col>
+                        <a-col :span="24"><div>{{item.value.keyWord}}</div></a-col>
                     </a-row>
                     <a-row>
                         <a-col :span="6">
@@ -36,82 +35,108 @@
                 </div>
             </transition-group>
         </div>
-        <!-- <bottomBar></bottomBar> -->
     </div>
 </template>
 
 <script>
-import back from './../components/back'
-import bottomBar from './../components/bottomBar'
+import { mapState,mapActions  } from 'vuex'
 
 export default {
     data(){
         return{
-            lists:[],
-            back_path:''
+            loading:'',
+            back_path:'',
         }
     },
     created(){
-        this.loading=true
-        // let isOn=false
         let isOn=true
          //获取模板数据，拼成要用的样子
-        hyExt.storage.getKeys().then(keys=>{
-            hyExt.logger.info('获取成功', keys)
-            keys.forEach(ele=>{
-                let obj={key:ele,checked:false,disabled:!isOn,show:false}
-                hyExt.storage.getItem(ele).then(value => {
-                    hyExt.logger.info('获取成功', value)
-                    let data=JSON.parse(value)
-                    obj.value=data
-                    this.lists.push(obj)
-                    
-                }).catch(err => {
-                    hyExt.logger.warn('获取失败', err)
-                })
-            })
-            this.loading=false;
-            this.$store.commit('setLists',{lists:this.lists})
-        }).catch(err=>{
-            hyExt.logger.warn('获取失败', err)
-        })
-    },
-    computed:{
+         //从vuex获取，每次更改状态要更新到vuex
+         //vuex里数据为空则从缓存获取（说明是第一次）
+        // console.log(this.lists)
+        if(this.lists.length==0){
+            //初始化
+            this.getLists()
+        }
         
     },
+    computed:{
+        on_count(){
+            return this.lists.reduce((acc,cur)=>{
+                        if(cur.checked&&!cur.value.isGift){
+                            acc++
+                        }
+                        return acc
+                    },0)
+        },
+        on_count_gift(){
+            return this.lists.reduce((acc,cur)=>{
+                        if(cur.checked&&cur.value.isGift){
+                            acc++
+                        }
+                        return acc
+                    },0)
+        },
+        ...mapState([
+            'lists',
+            'cur_lists',
+            'duration',
+            'boardExit',
+        ]),
+    },
     components:{
-        back,bottomBar
     },
     methods:{
+        ...mapActions([
+            'getLists',
+            'removeItem',
+        ]),
         onChange(item){
-            if(this.on_count>=1&&!item.checked){
-                this.$message.warning('只能监听一个哦')
-            }else{
-                item.checked=!item.checked
-                this.listen_count()
-                if(item.checked){
-                    this.startListen(item)
+            if(item.value.isGift){
+                if(this.on_count_gift>=1&&!item.checked){
+                    this.$message.warning('只能监听一个哦')
                 }else{
-                    this.stopListen()
-                    //删掉白板
+                    item.checked=!item.checked
+                    if(item.checked){
+                        console.log('jianting')
+                        this.startListenGift(item)
+                    }else{
+                        this.stopListen()
+                        //删掉白板
+                    }
+                }
+            }else{
+                if(this.on_count>=1&&!item.checked){
+                    this.$message.warning('只能监听一个哦')
+                }else{
+                    item.checked=!item.checked
+                    if(item.checked){
+                        // this.startListen(item)
+                    }else{
+                        // this.stopListen()
+                        //删掉白板
+                    }
                 }
             }
         },
-        listen_count(){
-            this.on_count = this.lists.reduce((acc,cur)=>{
-                if(cur.checked){
-                    acc++
-                }
-                return acc
-            },0)
+        goToUpdate(item){
+            this.$store.commit('getItem',{item:item})
+            this.$router.push(`/update/${item.key}`)
+        },
+        gotoMain(){
+            this.$router.push(`/main`)
+        },
+        removeItem(item){
+            this.removeItem(item)
         },
         startListen(item){
+            this.cur_lists.push(item)
             this.current_template = item.value.template
             this.current_item = item
             item.disabled=true
             this.isPreview = false
             let keyWord=item.value.keyWord
-            this.createZone(item)
+            // this.createZone(item)
             //刷新白板
             hyExt.context.onBarrageChange({
                 content:keyWord
@@ -121,7 +146,6 @@ export default {
                 //一段时间后文字消失
                 //给一个设置文字消失的间隔
                 this.isActive = true
-                // this.stopListen()
                 let delay = this.duration * 1000
                 setTimeout(() => {
                     this.isActive = false
@@ -129,14 +153,67 @@ export default {
                 hyExt.logger.info('有新弹幕', barrageInfo)
             }).then(() => {
                 item.disabled=false
+                //gotoMain
+                this.gotoMain()
                 this.$message.success('开始监听', 1)
                 hyExt.logger.info('监听成功')
             }).catch(err => {
                 hyExt.logger.warn('监听失败', err)
             })
         },
-        gotoStart(item){
-            this.$router.push('/main')
+        startListenGift(item){
+            this.cur_lists.push(item)
+            this.current_template = item.value.template
+            this.current_item = item
+            item.disabled=true
+            this.isPreview = false
+            let keyWord=item.value.keyWord
+            console.log(keyWord)
+            hyExt.context.onGiftChange({
+                itemName: keyWord
+            }, giftInfo => {
+                hyExt.logger.info('有新礼物', giftInfo)
+                let { sendNick, sendItemCount, sendItemComboHits, itemName } = giftInfo
+                let template = ``
+                if(sendItemComboHits == 0){
+                    template = `感谢${sendNick}送的${sendItemCount}个${itemName}！`
+                }else{
+                    template = `感谢${sendNick}送的${sendItemComboHits}组${itemName}！`
+                }
+                //同步到vuex
+                console.log(giftInfo)
+                this.isActive = true
+                let delay = this.duration * 1000
+                setTimeout(() => {
+                    this.isActive = false
+                }, delay);
+
+            }).then(() => {
+                item.disabled=false
+                //gotoMain
+                // this.gotoMain()
+                this.$message.success('开始监听', 1)
+                hyExt.logger.info('监听成功')
+            }).catch(err => {
+                hyExt.logger.warn('监听失败', err)
+            })
+        },
+        stopListenGift(){
+            this.current_item = ''
+            this.isPreview = true
+            this.isActive = false
+            this.$message.warning('监听已关闭')
+            hyExt.context.offGiftChange()
+            // this.removeZone()
+        },
+        stopListen(){
+            //取消某个关键词监听
+            this.current_item = ''
+            this.isPreview = true
+            this.isActive = false
+            this.$message.warning('监听已关闭')
+            hyExt.context.offBarrageChange()
+            // this.removeZone()
         },
     }
 }
