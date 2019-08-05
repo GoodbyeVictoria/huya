@@ -48,41 +48,37 @@
 </template>
 
 <script>
-import back from './../components/back'
+import { mapState,mapActions  } from 'vuex'
+
 
 export default {
     data(){
         return{
-            lists:[],
-            on_count:0,
             current_template:'预览区域',
             current_item:'',
             width:60,
             height:27.6,
             offsetX:-50,
             offsetY:-20,
-            isActive:false,
-            isPreview:true,
             duration:8,
         }
     },
     created(){
-        //判断当前是否创建白板（vuex）没有创建，就创建，已经创建，不创建
-        //获取当前监听的模板列表（vuex）
+        // let isOn=false
+         //获取模板数据，拼成要用的样子
+         this.$store.commit('setDuration',{duration:this.duration})
+        
     },
     computed:{
-        show_lists(){
-            return this.lists.slice(0,this.pageSize)
-        },
-        total(){
-            return this.lists.length
-        },
         leftOffset(){
             return `translate(${this.offsetX}%,${this.offsetY}%)`
-        }
+        },
+        ...mapState([
+            'isActive',
+            'isPreview',
+        ]),
     },
     components:{
-        back
     },
     methods:{
         onChange(item){

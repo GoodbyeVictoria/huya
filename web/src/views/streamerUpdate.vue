@@ -99,7 +99,8 @@ export default {
                             }else if(this.title_valid&&!err){
                                 let value=JSON.stringify(values)
                                 hyExt.storage.setItem(this.item_key, value).then(() => {
-                                    hyExt.logger.info('设置成功', values.keyWord)
+                                    hyExt.logger.info('设置成功')
+                                    this.$store.commit('updateItemValue',{key:this.item_key,value:values})
                                     this.is_finish=true
                                     this.disabled=false
                                     this.$message.success('修改成功', 1).then(this.goBack)
