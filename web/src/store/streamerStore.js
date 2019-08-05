@@ -7,7 +7,8 @@ const store=new Vuex.Store({
     state:{
         isEmpty:'',
         lists:[],
-        cur_item:''
+        cur_item:'',
+        cur_list:[]
     },
     getters:{
         lists_length:state=>state.lists.length

@@ -25,6 +25,19 @@
                         ]"
                     />
                 </a-form-item>
+                <a-form-item label="请输入模板内容" :label-col="{ span: 4 }" :wrapper-col="{ span: 8 }">
+                    <!-- <a-textarea 
+                        :autosize="{ minRows: 2, maxRows: 6 }" 
+                        v-decorator="['template',{rules: [{ required: true, message: '请输入模板内容' }]}]"
+                    /> -->
+                    <a-input
+                        placeholder="谢谢老板的虎粮！老板大气！"
+                        v-decorator="[
+                        'template',
+                        {rules: [{ required: true, message: '请输入模板内容' }]}
+                        ]"
+                    />
+                </a-form-item>
                 <a-form-item>
                     <a-button type="primary" :disabled="disabled" html-type="submit">
                         提交
@@ -74,11 +87,11 @@ export default {
                                 this.$message.error('标题名称重复');
                                 this.disabled=false
                             }else if(this.title_valid&&!err){
-                                let value=JSON.stringify(values)
-                                value = {
+                                let param = {
                                     isGift:true,
-                                    ...value
+                                    ...values
                                 }
+                                let value=JSON.stringify(param)
                                 hyExt.storage.setItem(values.title, value).then(() => {
                                     hyExt.logger.info('设置成功', values.keyWord)
                                     this.is_finish=true
@@ -125,7 +138,7 @@ export default {
         width: 90%;
         margin-top: -8%;
         .ant-row:first-child{
-            margin-bottom:44px;
+            margin-bottom:10px;
         }
     }
  }

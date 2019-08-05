@@ -1,12 +1,12 @@
 <template>
     <div class="streamerList">
         <!-- <back :path="back_path" content="返回主页"></back> -->
-        <div v-show="loading" class="loading">
+        <div v-show="showloading()" class="loading">
             <a-spin size="large"></a-spin>
         </div>
-        <div class="list-wrapper">
+        <div class="list-wrapper" v-if="lists.length > 0">
             <transition-group name="list-tran" enter-active-class="animated fadeInUp fast" leave-active-class="animated fadeOutUp fast">
-                <div :key="item.key" v-for="item in lists" class="item-wrapper">
+                <div :key="item.key" v-for="item in lists" class="item-wrapper" :class="{giftWrapper: item.value.isGift}">
                     <a-row>
                         <a-col :span="16"><div>{{item.value.title}}</div></a-col>
                         <a-col :span="6" :offset="2">
@@ -36,7 +36,14 @@
                 </div>
             </transition-group>
         </div>
-        <!-- <bottomBar></bottomBar> -->
+        <div v-else class="attention">
+            <div>
+                目前还没有模板哦！
+            </div>
+            <div>
+                快去点击创建模板吧！
+            </div>
+        </div>
     </div>
 </template>
 
@@ -48,16 +55,19 @@ export default {
     data(){
         return{
             lists:[],
-            back_path:''
+            back_path:'',
+            giftWrapper:''
         }
     },
     created(){
-        this.loading=true
+        this.showloading(true)
         // let isOn=false
         let isOn=true
          //获取模板数据，拼成要用的样子
         hyExt.storage.getKeys().then(keys=>{
             hyExt.logger.info('获取成功', keys)
+            this.showloading(false)
+
             keys.forEach(ele=>{
                 let obj={key:ele,checked:false,disabled:!isOn,show:false}
                 hyExt.storage.getItem(ele).then(value => {
@@ -70,7 +80,7 @@ export default {
                     hyExt.logger.warn('获取失败', err)
                 })
             })
-            this.loading=false;
+            
             this.$store.commit('setLists',{lists:this.lists})
         }).catch(err=>{
             hyExt.logger.warn('获取失败', err)
@@ -83,6 +93,10 @@ export default {
         back,bottomBar
     },
     methods:{
+        showloading(flag){
+            this.loading = flag
+            return this.loading
+        },
         onChange(item){
             if(this.on_count>=1&&!item.checked){
                 this.$message.warning('只能监听一个哦')
@@ -196,6 +210,9 @@ export default {
                 cursor:pointer;
             }
         }
+        .giftWrapper{
+            background: rgba(151, 200, 246, 0.2);
+        }
     }
     ::-webkit-scrollbar {
         background-color: #e8e8e8;
@@ -216,6 +233,19 @@ export default {
     cursor:pointer;
     color:brown;
     text-decoration: underline;
+}
+.attention {
+    @include flexCenter;
+    @include flex-direction(column);
+    width: 63%;
+    height: 22%;
+    background-color: #fafafa94;
+    box-shadow: 1px 1px 6px 1px #0000001f;
+    border-radius: 10px;
+    div {
+        margin: 5%;
+        letter-spacing: 1px;
+    }
 }
 
 </style>
