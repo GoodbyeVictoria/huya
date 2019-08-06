@@ -72,15 +72,21 @@ export default {
         // this.$store.watch(
         //     (state,getters) => state.cur_lists,
         //     (newValue, oldValue) => {
-        //         let value = JSON.parse(JSON.stringify(newValue))
-        //         this.setCurTemp({cur_temp: value[0]})
-        //         this.changeActive({isActive: true})
-        //         let delay = this.duration * 1000
-        //         setTimeout(() => {
-        //             this.changeActive({isActive: false})
-        //             this.popCurLists()
-        //         }, delay);
-        //         // this.asyncPop()
+        //         console.log(newValue, oldValue)
+        //         let n_value = JSON.parse(JSON.stringify(newValue))
+        //         let o_value = JSON.parse(JSON.stringify(oldValue))
+        //         console.log(n_value, o_value)
+        //         if(n_value.length < o_value.length){
+        //             console.log(222222)
+        //             this.setCurTemp({cur_temp: n_value[0]})
+        //             this.changeActive({isActive: true})
+        //             let delay = this.duration * 1000
+        //             setTimeout(() => {
+        //                 this.changeActive({isActive: false})
+        //                 this.popCurLists()
+        //             }, delay);
+        //         }
+        // //         // this.asyncPop()
         //     } 
         // )
     },
@@ -147,7 +153,7 @@ export default {
                         console.log('jianting')
                         this.startListenGift(item)
                     }else{
-                        this.stopListen()
+                        this.stopListenGift()
                         //删掉白板
                     }
                 }
@@ -208,14 +214,17 @@ export default {
                 //给一个设置文字消失的间隔
                 // if(this.cur_lists.length<=1){
                 // }
-                this.addCurLists({temp: item.value.template})
+                // this.addCurLists({temp: item.value.template})
                 //
-                this.setCurTemp({cur_temp: item.value.template})
-                this.changeActive({isActive: true})
-                let delay = this.duration * 1000
                 setTimeout(() => {
-                    this.changeActive({isActive: false})
-                }, delay);
+                    this.setCurTemp({cur_temp: item.value.template})
+                    this.changeActive({isActive: true})
+                    let delay = this.duration * 1000
+                    setTimeout(() => {
+                        this.changeActive({isActive: false})
+                    }, delay);
+                })
+                
                 hyExt.logger.info('有新弹幕', barrageInfo)  
             }).then(() => {
                 item.disabled=false
@@ -244,17 +253,20 @@ export default {
                     template = `感谢${sendNick}送的${sendItemComboHits}组${itemName}！${item.value.template}`
                 }
                 // if(item.value.isGift){
-                //     this.addCurLists({temp: template})
+                this.addCurLists({temp: template})
                 //     // this.cur_lists.push(template)
                 // }
                 //同步到vuex
-                this.setCurTemp({cur_temp: template})
-                console.log(giftInfo)
-                this.changeActive({isActive: true})
-                let delay = this.duration * 1000
-                setTimeout(() => {
-                    this.changeActive({isActive: false})
-                }, delay);
+                setTimeout(()=>{
+                    this.setCurTemp({cur_temp: template})
+                    console.log(giftInfo)
+                    this.changeActive({isActive: true})
+                    let delay = this.duration * 1000
+                    setTimeout(() => {
+                        this.changeActive({isActive: false})
+                    }, delay);
+                })
+                
                 
             }).then(() => {
                 item.disabled=false
