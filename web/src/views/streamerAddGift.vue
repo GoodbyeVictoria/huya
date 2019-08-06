@@ -38,19 +38,6 @@
                         ]"
                     />
                 </a-form-item>
-                <a-form-item label="请输入模板内容" :label-col="{ span: 4 }" :wrapper-col="{ span: 8 }">
-                    <!-- <a-textarea 
-                        :autosize="{ minRows: 2, maxRows: 6 }" 
-                        v-decorator="['template',{rules: [{ required: true, message: '请输入模板内容' }]}]"
-                    /> -->
-                    <a-input
-                        placeholder="谢谢老板的虎粮！老板大气！"
-                        v-decorator="[
-                        'template',
-                        {rules: [{ required: true, message: '请输入模板内容' }]}
-                        ]"
-                    />
-                </a-form-item>
                 <a-form-item>
                     <a-button type="primary" :disabled="disabled" html-type="submit">
                         提交
@@ -138,7 +125,7 @@ export default {
     width: 100%;
     height: 100%;
     .ant-btn-primary {
-        width:30%;
+        width:33%;
         margin-top: 30px;
     }
     .textarea {

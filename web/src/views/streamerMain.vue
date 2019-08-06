@@ -137,6 +137,7 @@ export default {
             background-color: #e9f5ff80;
             left:50%;
             top: 53%;
+            padding: 10px;
             .content {
                 position: relative;
                 top: 40%;

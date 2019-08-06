@@ -50,7 +50,6 @@
 </template>
 
 <script>
-import back from './../components/back'
 
 export default {
     props:['item_key'],
@@ -64,11 +63,9 @@ export default {
             disabled:false,
             template:'',
             cur_item:'',
-            back_path:'list'
         }
     },
     components:{
-        back
     },
     mounted(){
         this.cur_item=this.$store.state.cur_item

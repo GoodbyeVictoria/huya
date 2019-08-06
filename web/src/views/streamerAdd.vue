@@ -60,7 +60,6 @@ export default {
             is_finish:false,
             disabled:false,
             template:'',
-            back_path:'',
         }
     },
     components:{

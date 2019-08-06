@@ -1,6 +1,6 @@
 <template>
     <div class="streamerList">
-        <div v-show="lists.length <= 0" class="loading">
+        <div v-show="(lists.length <= 0) && !checkIsEmpty()" class="loading">
             <a-spin size="large"></a-spin>
         </div>
         <div class="list-wrapper" v-if="lists.length > 0">
@@ -53,8 +53,7 @@ export default {
     data(){
         return{
             cur_temp:'',
-            gift_coming:false,
-            danmu_coming:false,
+            local_lists:[],
         }
     },
     created(){
@@ -68,6 +67,22 @@ export default {
             this.getLists()
         }
         
+    },
+    mounted(){
+        // this.$store.watch(
+        //     (state,getters) => state.cur_lists,
+        //     (newValue, oldValue) => {
+        //         let value = JSON.parse(JSON.stringify(newValue))
+        //         this.setCurTemp({cur_temp: value[0]})
+        //         this.changeActive({isActive: true})
+        //         let delay = this.duration * 1000
+        //         setTimeout(() => {
+        //             this.changeActive({isActive: false})
+        //             this.popCurLists()
+        //         }, delay);
+        //         // this.asyncPop()
+        //     } 
+        // )
     },
     computed:{
         on_count(){
@@ -93,8 +108,17 @@ export default {
             'cur_lists'
         ]),
         ...mapGetters([
-            'showTemplates'
-        ])
+            'cur_lists_length'
+        ]),
+        getCurLists(){
+            return this.$store.state.cur_lists
+        },
+        getDuration(){
+            return this.$store.state.duration
+        }
+    },
+    watch:{
+        
     },
     components:{
     },
@@ -104,11 +128,14 @@ export default {
             'changePreview',
             'setCurTemp',
             'setBoardExist',
-            'addCurLists'
+            'addCurLists',
+            'popCurLists',
+            'cleanCurLists'
         ]),
         ...mapActions([
             'getLists',
             'removeItem',
+            'checkIsEmpty',
         ]),
         onChange(item){
             if(item.value.isGift){
@@ -148,6 +175,19 @@ export default {
         removeItem(item){
             this.removeItem(item)
         },
+        // asyncPop(){
+        //     return new Promise((resolve) => {
+        //         let delay = this.duration * 1000
+        //         setTimeout(() => {
+        //             this.changeActive({isActive: false})
+        //             this.popCurLists()
+        //             resolve(this.cur_lists)
+        //         }, delay);
+        //     })
+        // },
+        // async asyncAddCurList(){
+        //     let result = await this.m
+        // },
         startListen(item){
             item.disabled=true
             this.changePreview({isPreview: false})
@@ -157,30 +197,32 @@ export default {
             }, barrageInfo => {
                 console.log(barrageInfo)
                 this.cur_temp = item.value.template
-                if(!item.value.isGift){
-                    this.addCurLists({temp: item.value.template})
+                
+               
+                    // console.log(this.cur_lists)
                     // this.cur_lists.push(item.value.template)
-                }
+                
+                // console.log(this.$store.state.current_template)
                 //显示白板文字
                 //一段时间后文字消失
                 //给一个设置文字消失的间隔
                 // if(this.cur_lists.length<=1){
                 // }
-                // this.setCurTemp({cur_temp: item.value.template})
-                // this.changeActive({isActive: true})
-                // // this.isActive = true
-                // let delay = this.duration * 1000
-                // setTimeout(() => {
-                //     this.changeActive({isActive: false})
-                //     // this.isActive = false
-                // }, delay);
-                // hyExt.logger.info('有新弹幕', barrageInfo)  
+                this.addCurLists({temp: item.value.template})
+                //
+                this.setCurTemp({cur_temp: item.value.template})
+                this.changeActive({isActive: true})
+                let delay = this.duration * 1000
+                setTimeout(() => {
+                    this.changeActive({isActive: false})
+                }, delay);
+                hyExt.logger.info('有新弹幕', barrageInfo)  
             }).then(() => {
                 item.disabled=false
                 this.setBoardExist({exist: true})
                 //gotoMain
                 this.gotoMain()
-                this.$message.success('开始监听', 1)
+                this.$message.success('监听已打开，请尽量保持白板页面', 1)
                 hyExt.logger.info('监听成功')
             }).catch(err => {
                 hyExt.logger.warn('监听失败', err)
@@ -201,20 +243,18 @@ export default {
                 }else{
                     template = `感谢${sendNick}送的${sendItemComboHits}组${itemName}！${item.value.template}`
                 }
-                if(item.value.isGift){
-                    this.addCurLists({temp: template})
-                    // this.cur_lists.push(template)
-                }
+                // if(item.value.isGift){
+                //     this.addCurLists({temp: template})
+                //     // this.cur_lists.push(template)
+                // }
                 //同步到vuex
-                // this.setCurTemp({cur_temp: template})
-                // console.log(giftInfo)
-                // this.changeActive({isActive: true})
-                // // this.isActive = true
-                // let delay = this.duration * 1000
-                // setTimeout(() => {
-                //     this.changeActive({isActive: false})
-                //     // this.isActive = false
-                // }, delay);
+                this.setCurTemp({cur_temp: template})
+                console.log(giftInfo)
+                this.changeActive({isActive: true})
+                let delay = this.duration * 1000
+                setTimeout(() => {
+                    this.changeActive({isActive: false})
+                }, delay);
                 
             }).then(() => {
                 item.disabled=false
@@ -230,22 +270,20 @@ export default {
         //写在vuex的计算属性里
         stopListenGift(){
             this.changePreview({isPreview: true})
-            // this.isPreview = true
             this.changeActive({isActive: false})
-            // this.isActive = false
             this.$message.warning('监听已关闭')
             hyExt.context.offGiftChange()
+            this.cleanCurLists()
             //不一定remove
             this.removeZone()
         },
         stopListen(){
             //取消某个关键词监听
             this.changePreview({isPreview: true})
-            // this.isPreview = true
             this.changeActive({isActive: false})
-            // this.isActive = false
             this.$message.warning('监听已关闭')
             hyExt.context.offBarrageChange()
+            this.cleanCurLists()
             //不一定remove
             this.removeZone()
         },

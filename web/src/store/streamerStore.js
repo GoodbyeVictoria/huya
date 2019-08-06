@@ -6,6 +6,7 @@ Vue.use(Vuex)
 const store=new Vuex.Store({
     state:{
         lists:[],
+        isEmpty:true,
         cur_item:'',
         isPreview:'',
         cur_lists:[],
@@ -17,26 +18,12 @@ const store=new Vuex.Store({
     },
     getters:{
         lists_length:state=>state.lists.length,
-        showTemplates:state=>{
-            console.log(state.cur_lists)
-            while(state.cur_lists.length>=1){
-                let first = state.cur_lists[0]
-                state.isActive = true
-                state.current_template = first
-                // this.setCurTemp({cur_temp: first})
-                // this.changeActive({isActive: true})
-                // this.isActive = true
-                let delay = this.duration * 1000
-                setTimeout(() => {
-                    state.isActive = false
-                    // this.changeActive({isActive: false})
-                    // this.isActive = false
-                    state.cur_lists.pop()
-                }, delay);
-            }
-        }
+        cur_lists_length:state=>state.cur_lists.length,
     },
     mutations:{
+        checkIsEmpty(state,payload){
+            state.isEmpty = payload.isEmpty
+        },
         setLists(state,payload){
             state.lists=payload.lists
         },
@@ -49,6 +36,10 @@ const store=new Vuex.Store({
         },
         popCurLists(state){
             state.cur_lists.pop()
+        },
+        cleanCurLists(state){
+            let length = state.cur_lists.length
+            state.cur_lists.splice( 0, length )
         },
         getItem(state,payload){
             let key=payload.item.key
@@ -73,6 +64,7 @@ const store=new Vuex.Store({
             state.duration = payload.duration
         },
         setCurTemp(state,payload){
+            console.log(payload.cur_temp)
             state.current_template = payload.cur_temp
         },
         changeActive(state,payload){
@@ -115,6 +107,12 @@ const store=new Vuex.Store({
                 hyExt.logger.info('删除item成功')
             }).catch(err=>{
                 hyExt.logger.warn('删除item失败', err)
+            })
+        },
+        checkIsEmpty({ commit }){
+            hyExt.storage.getKeys().then(keys => {
+                let isEmpty = keys.length == 0 ? true : false
+                commit('checkIsEmpty',{ isEmpty: isEmpty })
             })
         },
     }
