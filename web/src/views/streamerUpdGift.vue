@@ -1,5 +1,5 @@
 <template>
-    <div class="streamerAdd">
+    <div class="streamerUpdGift">
         <div class="form-wrapper">
             <a-form :form="form" @submit="handleSubmit" class="form">
                 <a-form-item 
@@ -9,32 +9,32 @@
                     :help="tips"
                     >
                     <a-input
-                        placeholder="铭文1"
+                        placeholder="虎粮"
                         v-decorator="[
                         'title',
                         {rules: [{ required: true, message: '请输入模板标题' }]}
                         ]"
                     />
                 </a-form-item>
-                <a-form-item label="请输入关键字" :label-col="{ span: 4 }" :wrapper-col="{ span: 8 }">
-                    <a-input
-                        placeholder="铭文"
+                <a-form-item label="请选择礼物" :label-col="{ span: 4 }" :wrapper-col="{ span: 8 }">
+                    <a-select
                         v-decorator="[
-                        'keyWord',
-                        {rules: [{ required: true, message: '请输入关键字' }]}
+                            'keyWord',
+                            { initialValue: '虎粮' },
+                            {rules: [{ required: true, message: '请选择礼物' }]}
                         ]"
-                    />
+                        >
+                        <a-select-option :value="gift" v-for="(gift,idx) in giftList" :key="idx">
+                            {{gift}}
+                        </a-select-option>
+                    </a-select>
                 </a-form-item>
-                <a-form-item label="请输入模板内容" :label-col="{ span: 4 }" :wrapper-col="{ span: 8 }">
-                    <!-- <a-textarea 
-                        :autosize="{ minRows: 2, maxRows: 6 }" 
-                        v-decorator="['template',{rules: [{ required: true, message: '请输入模板内容' }]}]"
-                    /> -->
+                <a-form-item label="请输入模板内容" :label-col="{ span: 4 }" :wrapper-col="{ span: 8 }" :help="contentTips">
                     <a-input
-                        placeholder="88法穿"
+                        placeholder="谢谢老板！老板大气！"
                         v-decorator="[
                         'template',
-                        {rules: [{ required: true, message: '请输入模板内容' }]}
+                        {rules: [{ required: false, message: '请输入模板内容' }]}
                         ]"
                     />
                 </a-form-item>
@@ -49,8 +49,8 @@
 </template>
 
 <script>
-
 export default {
+    props:['item_key'],
     data(){
         return {
             formLayout:'horizontal',
@@ -59,13 +59,22 @@ export default {
             title_valid:true,
             is_finish:false,
             disabled:false,
+            cur_item:'',
+            contentTips:'默认内容包含送礼人、礼物个数和礼物名称，模板内容自动拼接到默认内容后面，例如：感谢小虎牙送的10个虎粮！老板大气！',
+            giftList:['虎粮','宝剑','荧光棒','血瓶','火锅','魔法书','钞票枪','虎牙一号','奖杯','高能预警','藏宝图','礼盒','星云战机','超时空战舰'],
         }
     },
     components:{
     },
+    mounted(){
+        this.cur_item=this.$store.state.cur_item
+        let { title, keyWord, template} = this.cur_item.value
+        this.form.setFieldsValue({ title:title, keyWord:keyWord, template:template })
+    },
     methods:{
         goBack(){
-            this.$router.push('/')
+            //yonghistory
+            this.$router.go(-1)
         },
         handleSubmit(e){
             e.preventDefault()
@@ -79,19 +88,23 @@ export default {
                         hyExt.storage.getKeys().then(keys => {
                             hyExt.logger.info('获取成功', keys)
                             this.title_valid=keys.every(ele=>{
-                                return ele!==values.title
+                                return ele!==values.title||ele==this.item_key
                             })
                             if(!this.title_valid){
-                                this.$message.error('标题名称重复');
+                                this.$message.error('与已有标题名称重复');
                                 this.disabled=false
                             }else if(this.title_valid&&!err){
-                                let value=JSON.stringify(values)
-                                hyExt.storage.setItem(values.title, value).then(() => {
+                                let param = {
+                                    isGift:true,
+                                    ...values
+                                }
+                                let value=JSON.stringify(param)
+                                hyExt.storage.setItem(this.item_key, value).then(() => {
                                     hyExt.logger.info('设置成功')
-                                    this.$store.commit('addItem',{key:values.title,value:values})
+                                    this.$store.commit('updateItemValue',{key:this.item_key,value:values})
                                     this.is_finish=true
                                     this.disabled=false
-                                    this.$message.success('添加成功', 1).then(this.goBack)
+                                    this.$message.success('修改成功', 1).then(this.goBack)
                                 }).catch(err => {
                                     hyExt.logger.warn('设置失败', err)
                                 })
@@ -108,16 +121,18 @@ export default {
     }
 }
 </script>
-<style lang="scss">
+
+<style lang="scss" scoped>
 @import "./../assets/scss/partial/flex";
 
- .streamerAdd{
+.streamerUpdGift{
     @include flexCenter;
     @include flex-direction(column);
     width: 100%;
     height: 100%;
     .ant-btn-primary {
-        width:30%;
+        width:33%;
+        margin-top: 30px;
     }
     .textarea {
         max-width: 100%;
@@ -127,7 +142,7 @@ export default {
         min-height: 32px;
     }
     .form-wrapper {
-        padding: 23px 28px;
+        padding: 23px 28px 8px 28px;
         background-color: #fafafa99;
         border-radius: 10px;
         width: 90%;
@@ -136,12 +151,28 @@ export default {
             margin-bottom:10px;
         }
     }
+    .alert{
+        position:fixed;
+        top:52px;
+    }
+    .textarea{
+        max-width: 100%;
+        height: auto;
+        vertical-align: bottom;
+        transition: all 0.3s, height 0s;
+        min-height: 32px;
+    }
  }
-.alert{
-     position:fixed;
-     top:52px;
- }
- 
-</style>
 
+ ::-webkit-scrollbar {
+    background-color: #e8e8e8;
+    width: 10px;
+    background-clip: padding-box;
+    border-radius: 7px;
+}
+::-webkit-scrollbar-thumb {
+    background-color: #fafafae0;
+    border-radius: 7px;
+}
+</style>
 

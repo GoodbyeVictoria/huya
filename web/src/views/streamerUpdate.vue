@@ -1,6 +1,5 @@
 <template>
     <div class="streamerMain">
-        <back :path="back_path" content="返回模板列表"></back>
         <div class="form-wrapper">
             <a-form :form="form" @submit="handleSubmit" class="form">
                 <a-form-item 
@@ -74,7 +73,7 @@ export default {
     methods:{
         goBack(){
             //yonghistory
-            this.$router.push(`/${this.back_path}`)
+            this.$router.go(-1)
         },
         handleSubmit(e){
             e.preventDefault()
@@ -117,7 +116,7 @@ export default {
     }
 }
 </script>
-<style lang="scss">
+<style lang="scss" scoped>
 @import "./../assets/scss/partial/flex";
 
  .streamerMain{
@@ -125,6 +124,26 @@ export default {
     @include flex-direction(column);
     width: 100%;
     height: 100%;
+    .ant-btn-primary {
+        width:30%;
+    }
+    .textarea {
+        max-width: 100%;
+        height: auto;
+        vertical-align: bottom;
+        transition: all 0.3s, height 0s;
+        min-height: 32px;
+    }
+    .form-wrapper {
+        padding: 23px 28px;
+        background-color: #fafafa99;
+        border-radius: 10px;
+        width: 90%;
+        margin-top: -8%;
+        .ant-row:first-child{
+            margin-bottom:10px;
+        }
+    }
  }
 .alert{
      position:fixed;

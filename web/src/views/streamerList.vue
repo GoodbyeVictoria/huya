@@ -52,8 +52,8 @@ import { mapState,mapActions,mapMutations,mapGetters } from 'vuex'
 export default {
     data(){
         return{
-            cur_temp:'',
-            cur_lists:[],
+            timer:'',
+
         }
     },
     created(){
@@ -61,35 +61,12 @@ export default {
          //获取模板数据，拼成要用的样子
          //从vuex获取，每次更改状态要更新到vuex
          //vuex里数据为空则从缓存获取（说明是第一次）
-        // console.log(this.lists)
         if(this.lists.length==0){
             //初始化
             this.getLists()
             
         }
-        
-    },
-    mounted(){
-        // this.$store.watch(
-        //     (state,getters) => state.cur_lists,
-        //     (newValue, oldValue) => {
-        //         console.log(newValue, oldValue)
-        //         let n_value = JSON.parse(JSON.stringify(newValue))
-        //         let o_value = JSON.parse(JSON.stringify(oldValue))
-        //         console.log(n_value, o_value)
-        //         if(n_value.length < o_value.length){
-        //             console.log(222222)
-        //             this.setCurTemp({cur_temp: n_value[0]})
-        //             this.changeActive({isActive: true})
-        //             let delay = this.duration * 1000
-        //             setTimeout(() => {
-        //                 this.changeActive({isActive: false})
-        //                 this.popCurLists()
-        //             }, delay);
-        //         }
-        // //         // this.asyncPop()
-        //     } 
-        // )
+
     },
     computed:{
         on_count(){
@@ -112,31 +89,17 @@ export default {
             'lists',
             'duration',
             'boardExist',
+            'cur_lists'
         ]),
         ...mapGetters([
-            'cur_lists_length'
+            'cur_lists_length',
+            'isCurListEmpty',
         ]),
-        getCurLists(){
-            return this.cur_lists
+        curListLength() {
+            return this.$store.getters.cur_lists_length
         },
-        curListsLength(){
-            // return this.cur_lists.length
-            return this.lists.length
-        },
-        listsEmpty() {
-            console.log(this.curListsLength)
-            if(this.curListsLength > 0) {
-                return false
-            }else {
-                return true
-            }
-        },
-        
-    },
-    watch:{
-        listsEmpty(val, oldVal){
-            console.log(val, oldVal)
-            this.handleQueue()
+        curListEmpty(){
+            return this.$store.getters.isCurListEmpty
         }
     },
     components:{
@@ -147,9 +110,9 @@ export default {
             'changePreview',
             'setCurTemp',
             'setBoardExist',
-            // 'addCurLists',
-            // 'popCurLists',
-            // 'cleanCurLists'
+            'addCurLists',
+            'popCurLists',
+            'cleanCurLists'
         ]),
         ...mapActions([
             'getLists',
@@ -157,7 +120,8 @@ export default {
             'checkIsEmpty',
         ]),
         handleQueue(){
-            if(this.listsEmpty){
+            console.log(111)
+            if(this.cur_lists.length == 0){
                 return
             }else{
                 this.setCurTemp({cur_temp: this.cur_lists[0]})
@@ -167,14 +131,13 @@ export default {
                     this.changeActive({isActive: false})
                     let val = this.cur_lists.pop()
                     console.log(val)
-                    if(!this.listsEmpty){
-                        this.handleQueue()
-                    }
+                    // if(!this.cur_lists.length == 0){
+                    //     this.handleQueue()
+                    // }
                 }, delay);
             }
         },
         onChange(item){
-            console.log(this.curListsLength)
             if(item.value.isGift){
                 if(this.on_count_gift>=1&&!item.checked){
                     this.$message.warning('只能监听一个哦')
@@ -204,7 +167,12 @@ export default {
         },
         goToUpdate(item){
             this.$store.commit('getItem',{item:item})
-            this.$router.push(`/update/${item.key}`)
+            if(item.value.isGift){
+                this.$router.push(`/updateGift/${item.key}`)
+            }else{
+                this.$router.push(`/update/${item.key}`)
+            }
+            
         },
         gotoMain(){
             this.$router.push(`/main`)
@@ -220,40 +188,24 @@ export default {
                 content:keyWord
             }, barrageInfo => {
                 console.log(barrageInfo)
-                this.cur_temp = item.value.template
-                
-               
-                    // console.log(this.cur_lists)
-                    // this.cur_lists.push(item.value.template)
-                
-                // console.log(this.$store.state.current_template)
                 //显示白板文字
                 //一段时间后文字消失
                 //给一个设置文字消失的间隔
-                // if(this.cur_lists.length<=1){
-                // }
                 // this.addCurLists({temp: item.value.template})
-                //
-                this.cur_lists.push(item.value.template)
-                this.$nextTick(()=>{
-                    console.log(this.listsEmpty)
-                })
-                console.log(this.listsEmpty)
-                console.log(this.cur_lists.length)
-                console.log(this.getCurLists)
-                console.log(this.curListsLength)
-                // setTimeout(() => {
-                //     this.setCurTemp({cur_temp: item.value.template})
-                //     this.changeActive({isActive: true})
-                //     let delay = this.duration * 1000
-                //     setTimeout(() => {
-                //         this.changeActive({isActive: false})
-                //     }, delay);
-                // })
                 
+                this.setCurTemp({cur_temp: item.value.template})
+                this.changeActive({isActive: true})
+                let delay = this.duration * 1000
+                setTimeout(() => {
+                    this.changeActive({isActive: false})
+                    let val = this.cur_lists.pop()
+                    console.log(val)
+                }, delay);
+               
                 hyExt.logger.info('有新弹幕', barrageInfo)  
             }).then(() => {
                 item.disabled=false
+                
                 this.setBoardExist({exist: true})
                 //gotoMain
                 this.gotoMain()
@@ -278,33 +230,21 @@ export default {
                 }else{
                     template = `感谢${sendNick}送的${sendItemComboHits}组${itemName}！${item.value.template}`
                 }
-                // if(item.value.isGift){
                 // this.addCurLists({temp: template})
-                this.cur_lists.push(template)
-                console.log(this.listsEmpty)
-                console.log(this.cur_lists.length)
-                console.log(this.getCurLists)
-                console.log(this.curListsLength)
-
-                // }
-                //同步到vuex
-                // setTimeout(()=>{
-                //     this.setCurTemp({cur_temp: template})
-                //     console.log(giftInfo)
-                //     this.changeActive({isActive: true})
-                //     let delay = this.duration * 1000
-                //     setTimeout(() => {
-                //         this.changeActive({isActive: false})
-                //     }, delay);
-                // })
-                
-                
+                this.setCurTemp({cur_temp: template})
+                this.changeActive({isActive: true})
+                let delay = this.duration * 1000
+                setTimeout(() => {
+                    this.changeActive({isActive: false})
+                    let val = this.cur_lists.pop()
+                    console.log(val)
+                }, delay);
             }).then(() => {
                 item.disabled=false
                 //gotoMain
                 this.setBoardExist({exist: true})
                 this.gotoMain()
-                this.$message.success('开始监听', 1)
+                this.$message.success('监听已打开，请尽量保持白板页面', 1)
                 hyExt.logger.info('监听成功')
             }).catch(err => {
                 hyExt.logger.warn('监听失败', err)
@@ -316,8 +256,8 @@ export default {
             this.changeActive({isActive: false})
             this.$message.warning('监听已关闭')
             hyExt.context.offGiftChange()
-            // this.cleanCurLists()
-            this.cur_lists.splice()
+            this.cleanCurLists()
+            // this.cur_lists.splice()
             //不一定remove
             this.removeZone()
         },
@@ -327,8 +267,8 @@ export default {
             this.changeActive({isActive: false})
             this.$message.warning('监听已关闭')
             hyExt.context.offBarrageChange()
-            // this.cleanCurLists()
-            this.cur_lists.splice()
+            this.cleanCurLists()
+            // this.cur_lists.splice()
             //不一定remove
             this.removeZone()
         },
@@ -394,10 +334,10 @@ export default {
             border-radius: 17px;
             box-shadow: 1px 1px 6px 1px #0000001f;
             transform:scale(1.0);
-            transition:all 0.5s;
+            transition:all 0.2s;
             &:hover{
                 transform:scale(1.04);
-                transition:all 0.5s;
+                transition:all 0.2s;
                 cursor:pointer;
             }
         }

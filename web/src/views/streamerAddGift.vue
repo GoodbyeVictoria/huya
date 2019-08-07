@@ -59,7 +59,6 @@ export default {
             title_valid:true,
             is_finish:false,
             disabled:false,
-            template:'',
             contentTips:'默认内容包含送礼人、礼物个数和礼物名称，模板内容自动拼接到默认内容后面，例如：感谢小虎牙送的10个虎粮！老板大气！',
             giftList:['虎粮','宝剑','荧光棒','血瓶','火锅','魔法书','钞票枪','虎牙一号','奖杯','高能预警','藏宝图','礼盒','星云战机','超时空战舰'],
         }

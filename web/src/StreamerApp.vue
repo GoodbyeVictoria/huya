@@ -68,7 +68,7 @@ export default {
         @include flexCenter;
         @include flex-direction(column);
         position: relative;
-        width: 168px;
+        width: 161px;
         height: 118px;
         margin-top: -10%;
         background: #fafafa94;
@@ -77,20 +77,20 @@ export default {
         &::before{
             content: '';
             position: absolute;
-            right: 100px;
+            right: 94px;
             top: 108px;
             border-style: solid;
-            border-width: 27px 16px 0px 20px;
+            border-width: 26px 16px 0px 20px;
             border-color: #fafafa transparent transparent transparent;
         }
         .shu{
-            width: 13px;
-            height: 56px;
+            width: 12px;
+            height: 53px;
             background-color: #4c8237d9;
         }
         .heng{
-            width: 67px;
-            height: 13px;
+            width: 62px;
+            height: 12px;
             background-color: #4c8237d9;
         }
     }

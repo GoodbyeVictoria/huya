@@ -6,6 +6,7 @@ import streamerList from './../views/streamerList'
 import streamerUpdate from './../views/streamerUpdate'
 import streamerMain from './../views/streamerMain'
 import streamerAddGift from './../views/streamerAddGift'
+import streamerUpdGift from './../views/streamerUpdGift'
 
 Vue.use(VueRouter)
 
@@ -35,6 +36,12 @@ const routes=[
         name:'update',
         props:true,
         component:streamerUpdate
+    },
+    {
+        path:'/updateGift/:item_key',
+        name:'updateGift',
+        props:true,
+        component:streamerUpdGift
     },
     {
         path:'/main',

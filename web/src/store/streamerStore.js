@@ -15,10 +15,18 @@ const store=new Vuex.Store({
         isPreview:true,
         boardExist:false,
         current_template:'预览区域',
+        isCurListEmpty:true,
     },
     getters:{
         lists_length:state=>state.lists.length,
         cur_lists_length:state=>state.cur_lists.length,
+        isCurListEmpty:state=>{
+            if(state.cur_lists.length == 0){
+                return true
+            }else {
+                return false
+            }
+        },
     },
     mutations:{
         checkIsEmpty(state,payload){
