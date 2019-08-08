@@ -282,7 +282,7 @@ export default {
                 border: 0;
             }
             &:nth-child(1){
-                font-size:21px;
+                font-size:19px;
                 letter-spacing: 3px;
                 font-weight:500;
             }

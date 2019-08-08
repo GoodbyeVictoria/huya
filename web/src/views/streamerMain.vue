@@ -7,10 +7,10 @@
                         <a-col :span="9">
                             <div> 当前模板：</div>
                         </a-col>
-                        <template v-if="cur_temps.length === 0"><a-col :span="5">无</a-col></template>
+                        <template v-if="cur_temps.length === 0"><a-col :span="15">无</a-col></template>
                         <template v-else>
                             <transition-group name="title" enter-active-class="animated fadeInDown" leave-active-class="animated fadeOutDown">
-                                <a-col :span="10" v-for="(el,index) in cur_temps" :key="el" v-show="index===currentIndex" style="position:absolute;left:37.5%;">
+                                <a-col :span="15" v-for="(el,index) in cur_temps" :key="el" v-show="index===currentIndex" style="position:absolute;left:37.5%;">
                                     <div>{{el}}</div>
                                 </a-col>
                             </transition-group>
@@ -218,6 +218,19 @@ export default {
                 .ant-input-number {
                     margin-top: 5px;
                     width:65px;
+                }
+            }
+            .current-templates{
+                .ant-row{
+                    padding: 6px 0;
+                    .ant-col-9{
+                        padding: 6px 0;
+                    }
+                    .ant-col-15{
+                        padding: 6px 0;
+                        background-color: #b9daea82;
+                        border-radius: 14px;
+                    }
                 }
             }
         }
