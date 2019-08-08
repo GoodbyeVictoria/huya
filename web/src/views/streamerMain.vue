@@ -1,13 +1,22 @@
 <template>
     <div class="streamerMain">
         <div class="preview">
-            <!-- <div class="current-templates">当前模板：
-                <div class="current-wrapper">
-                    <div class="title">无</div>
-                    <div class="title">无</div>
-                </div>
-            </div> -->
             <div class="edit-zone">
+                <div class="current-templates">
+                    <a-row style="position:relative;">
+                        <a-col :span="9">
+                            <div> 当前模板：</div>
+                        </a-col>
+                        <template v-if="cur_temps.length === 0"><a-col :span="5">无</a-col></template>
+                        <template v-else>
+                            <transition-group name="title" enter-active-class="animated fadeInDown" leave-active-class="animated fadeOutDown">
+                                <a-col :span="10" v-for="(el,index) in cur_temps" :key="el" v-show="index===currentIndex" style="position:absolute;left:37.5%;">
+                                    <div>{{el}}</div>
+                                </a-col>
+                            </transition-group>
+                        </template>
+                    </a-row>
+                </div>
                 <div class="zone-size">
                     <a-row>
                         <a-col :span="6">
@@ -30,25 +39,27 @@
                             <label>模板停留时间</label>
                         </a-col>
                         <a-col :span="10">
-                            <a-input-number :min="1" :max="20" v-model="duration" :defaultValue="8" :disabled="!isPreview" size="small" @change="setDuration" /> 秒
+                            <a-input-number :min="1" :max="20" v-model="duration" :defaultValue="8" :disabled="!isPreview" size="small" @change="changeDuration" /> 秒
                         </a-col>
                     </a-row>
                 </div>
             </div>
             <div class="zone" id="zone" ref="zone" :style="{width:width + '%',height:height + '%',transform:leftOffset}">
-                <transition name="zone" enter-active-class="animated fadeInLeft" leave-active-class="animated fadeOutRight">
-                    <div class="content" v-show="isActive||isPreview">
-                        {{current_template}}
-                    </div>
-                </transition>
+                <div v-if="isPreview" class="content-pre">{{ default_temp }}</div>
+                <div v-else>
+                    <transition name="zone-tra" enter-active-class="animated fadeInLeft" leave-active-class="animated fadeOutRight" @after-enter="afterEnter" mode="out-in">
+                        <div class="content"  v-for="item in showlist(cur_lists,start,end)" :key="item.index">
+                            {{ item.temp }}
+                        </div>
+                    </transition>
+                </div>
             </div>
         </div>
-        
     </div>
 </template>
 
 <script>
-import { mapState,mapActions  } from 'vuex'
+import { mapState,mapGetters,mapMutations } from 'vuex'
 
 
 export default {
@@ -59,33 +70,82 @@ export default {
             offsetX:-50,
             offsetY:-20,
             duration:8,
+            default_temp:'预览区域',
+            currentIndex:'',
+            start:0,
+            end:0,
+            currentIndex:0,
+            timer:''
         }
     },
-    created(){
+    mounted(){
         // let isOn=false
          //获取模板数据，拼成要用的样子
-         this.$store.commit('setDuration',{duration:this.duration})
-         if(!this.boardExist){
-             this.createZone()
-         }
-        
+         this.$nextTick(()=>{
+             if(!this.isPreview&&this.cur_lists_length==0){
+                 //监听模式并且第一次进来
+                this.end = 1
+                this.changeEnd({end:1})
+                this.createZone()
+             }else if(!this.isPreview&&this.cur_lists_length > 0){
+                 //监听模式并且不是第一次进来
+                this.start = this.start_s
+                this.end = this.end_s
+             }
+             this.timer = setInterval(() => {
+                 this.autoPlay()
+             }, 3000);
+             console.log(this.cur_lists_length,this.end)
+         })
+    },
+    destroyed(){
+        clearInterval(this.timer)
     },
     computed:{
         leftOffset(){
             return `translate(${this.offsetX}%,${this.offsetY}%)`
         },
         ...mapState([
-            'isActive',
+            'boardExist',
+            'cur_lists',
             'isPreview',
-            'current_template',
-            'boardExist'
+            'cur_temps'
         ]),
+        ...mapState({
+            start_s:'start',
+            end_s:'end'
+        }),
+        ...mapGetters([
+            'cur_lists_length',
+            'cur_temps_length'
+        ]),
+        delay(){
+            return this.duration * 1000
+        },
     },
     components:{
     },
     methods:{
-        setDuration(value){
-            this.$store.commit('setDuration',{duration:this.duration})
+        ...mapMutations([
+            'changeStart',
+            'changeEnd'
+        ]),
+        autoPlay(){
+            this.currentIndex = (this.currentIndex+1)%this.cur_temps.length
+        },
+        showlist(list,start,end){
+            return this.cur_lists.slice(start,end)
+        },
+        afterEnter(){
+            setTimeout(()=>{
+                this.changeStart({start:this.start_s+1})
+                this.changeEnd({end:this.end_s+1})
+                this.start = (this.start+1)
+                this.end = (this.end+1)
+            },this.delay)
+        },
+        changeDuration(value){
+            this.setDuration({duration:value})
         },
         createZone(item){
             //停止监听弹幕
@@ -139,28 +199,17 @@ export default {
             top: 53%;
             padding: 10px;
             .content {
+                position:relative;
+                top: 46px;
+            }
+            .content-pre {
                 position: relative;
                 top: 40%;
             }
         }
-        .current-templates{
-            height: 16%;
-            margin: 7px;
-            .current-wrapper{
-                @include flexCenter;
-                .title{
-                    height:90%;
-                    width:40%;
-                    background-color: #fafafa94;
-                    box-shadow: 1px 1px 6px 1px #0000001f;
-                    border-radius: 4px;
-                    margin: 5px 0;
-                }
-            }
-        }
         .edit-zone {
             padding: 0 0 5px 0;
-            margin: 34px 0;
+            margin: 20px 0 34px 0;
             .zone-size {
                 label {
                     display: inline-block;

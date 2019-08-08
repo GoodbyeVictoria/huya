@@ -52,8 +52,7 @@ import { mapState,mapActions,mapMutations,mapGetters } from 'vuex'
 export default {
     data(){
         return{
-            timer:'',
-
+            count:0,
         }
     },
     created(){
@@ -87,56 +86,32 @@ export default {
         },
         ...mapState([
             'lists',
-            'duration',
             'boardExist',
             'cur_lists'
         ]),
         ...mapGetters([
-            'cur_lists_length',
-            'isCurListEmpty',
+            'cur_lists_length'
         ]),
-        curListLength() {
-            return this.$store.getters.cur_lists_length
-        },
-        curListEmpty(){
-            return this.$store.getters.isCurListEmpty
+        last_item(){
+            return this.$store.state.cur_lists[0]
         }
     },
     components:{
     },
     methods:{
         ...mapMutations([
-            'changeActive',
-            'changePreview',
-            'setCurTemp',
             'setBoardExist',
             'addCurLists',
-            'popCurLists',
-            'cleanCurLists'
+            'cleanCurLists',
+            'changePreview',
+            'addCurTemps',
+            'removeCurTemps'
         ]),
         ...mapActions([
             'getLists',
             'removeItem',
             'checkIsEmpty',
         ]),
-        handleQueue(){
-            console.log(111)
-            if(this.cur_lists.length == 0){
-                return
-            }else{
-                this.setCurTemp({cur_temp: this.cur_lists[0]})
-                this.changeActive({isActive: true})
-                let delay = this.duration * 1000
-                setTimeout(() => {
-                    this.changeActive({isActive: false})
-                    let val = this.cur_lists.pop()
-                    console.log(val)
-                    // if(!this.cur_lists.length == 0){
-                    //     this.handleQueue()
-                    // }
-                }, delay);
-            }
-        },
         onChange(item){
             if(item.value.isGift){
                 if(this.on_count_gift>=1&&!item.checked){
@@ -147,7 +122,7 @@ export default {
                         console.log('jianting')
                         this.startListenGift(item)
                     }else{
-                        this.stopListenGift()
+                        this.stopListenGift(item)
                         //删掉白板
                     }
                 }
@@ -159,7 +134,7 @@ export default {
                     if(item.checked){
                         this.startListen(item)
                     }else{
-                        this.stopListen()
+                        this.stopListen(item)
                         //删掉白板
                     }
                 }
@@ -183,25 +158,23 @@ export default {
         startListen(item){
             item.disabled=true
             this.changePreview({isPreview: false})
+            this.addCurTemps({title:item.value.title})
             let keyWord=item.value.keyWord
             hyExt.context.onBarrageChange({
                 content:keyWord
             }, barrageInfo => {
                 console.log(barrageInfo)
+                this.count = Math.floor(Date.now() / 1000);
                 //显示白板文字
                 //一段时间后文字消失
                 //给一个设置文字消失的间隔
-                // this.addCurLists({temp: item.value.template})
+                // console.log(this.last_item)
+                // console.log(this.cur_lists_length)
+                // if(this.last_item !== item.value.template){
+                //     this.addCurLists({index:this.count ,temp: item.value.template})
+                // }
+                this.addCurLists({index:this.count ,temp: item.value.template})
                 
-                this.setCurTemp({cur_temp: item.value.template})
-                this.changeActive({isActive: true})
-                let delay = this.duration * 1000
-                setTimeout(() => {
-                    this.changeActive({isActive: false})
-                    let val = this.cur_lists.pop()
-                    console.log(val)
-                }, delay);
-               
                 hyExt.logger.info('有新弹幕', barrageInfo)  
             }).then(() => {
                 item.disabled=false
@@ -218,11 +191,13 @@ export default {
         startListenGift(item){
             item.disabled=true
             this.changePreview({isPreview: false})
+            this.addCurTemps({title:item.value.title})
             let keyWord=item.value.keyWord
             hyExt.context.onGiftChange({
                 itemName: keyWord
             }, giftInfo => {
                 hyExt.logger.info('有新礼物', giftInfo)
+                this.count = Math.floor(Date.now() / 1000);
                 let { sendNick, sendItemCount, sendItemComboHits, itemName } = giftInfo
                 let template = ``
                 if(sendItemComboHits == 0){
@@ -230,15 +205,12 @@ export default {
                 }else{
                     template = `感谢${sendNick}送的${sendItemComboHits}组${itemName}！${item.value.template}`
                 }
-                // this.addCurLists({temp: template})
-                this.setCurTemp({cur_temp: template})
-                this.changeActive({isActive: true})
-                let delay = this.duration * 1000
-                setTimeout(() => {
-                    this.changeActive({isActive: false})
-                    let val = this.cur_lists.pop()
-                    console.log(val)
-                }, delay);
+                // console.log(this.last_item)
+                // if(this.last_item !== template){
+                //     this.addCurLists({index:this.count,temp: template})
+                // }
+                this.addCurLists({index:this.count,temp: template})
+
             }).then(() => {
                 item.disabled=false
                 //gotoMain
@@ -251,24 +223,22 @@ export default {
             })
         },
         //写在vuex的计算属性里
-        stopListenGift(){
-            this.changePreview({isPreview: true})
-            this.changeActive({isActive: false})
+        stopListenGift(item){
             this.$message.warning('监听已关闭')
             hyExt.context.offGiftChange()
             this.cleanCurLists()
-            // this.cur_lists.splice()
+            this.removeCurTemps({title:item.value.title})
+            this.changePreview({isPreview: true})
             //不一定remove
             this.removeZone()
         },
-        stopListen(){
+        stopListen(item){
             //取消某个关键词监听
-            this.changePreview({isPreview: true})
-            this.changeActive({isActive: false})
             this.$message.warning('监听已关闭')
             hyExt.context.offBarrageChange()
             this.cleanCurLists()
-            // this.cur_lists.splice()
+            this.removeCurTemps({title:item.value.title})
+            this.changePreview({isPreview: true})
             //不一定remove
             this.removeZone()
         },
@@ -281,7 +251,6 @@ export default {
                     hyExt.logger.warn('删除白板失败', err)
                 })
             }
-            
         },
     }
 }
