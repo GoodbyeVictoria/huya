@@ -53,6 +53,9 @@ export default {
     data(){
         return{
             count:0,
+            stopDanmu:true,
+            stopGift:true,
+            isStopFinish:true,
         }
     },
     created(){
@@ -63,9 +66,12 @@ export default {
         if(this.lists.length==0){
             //初始化
             this.getLists()
-            
         }
-
+    },
+    beforeRouteLeave (to, from, next) {
+        if(this.isStopFinish){
+            next()
+        }
     },
     computed:{
         on_count(){
@@ -90,11 +96,9 @@ export default {
             'cur_lists'
         ]),
         ...mapGetters([
-            'cur_lists_length'
+            'cur_lists_length',
+            'last_item',
         ]),
-        last_item(){
-            return this.$store.state.cur_lists[0]
-        }
     },
     components:{
     },
@@ -105,7 +109,7 @@ export default {
             'cleanCurLists',
             'changePreview',
             'addCurTemps',
-            'removeCurTemps'
+            'removeCurTemps',
         ]),
         ...mapActions([
             'getLists',
@@ -115,7 +119,7 @@ export default {
         onChange(item){
             if(item.value.isGift){
                 if(this.on_count_gift>=1&&!item.checked){
-                    this.$message.warning('只能监听一个哦')
+                    this.$message.warning('只能监听一个礼物模板哦')
                 }else{
                     item.checked=!item.checked
                     if(item.checked){
@@ -128,7 +132,7 @@ export default {
                 }
             }else{
                 if(this.on_count>=1&&!item.checked){
-                    this.$message.warning('只能监听一个哦')
+                    this.$message.warning('只能监听一个弹幕模板哦')
                 }else{
                     item.checked=!item.checked
                     if(item.checked){
@@ -157,6 +161,7 @@ export default {
         },
         startListen(item){
             item.disabled=true
+            this.stopDanmu = false
             this.changePreview({isPreview: false})
             this.addCurTemps({title:item.value.title})
             let keyWord=item.value.keyWord
@@ -165,23 +170,19 @@ export default {
             }, barrageInfo => {
                 console.log(barrageInfo)
                 this.count = Math.floor(Date.now() / 1000);
-                //显示白板文字
-                //一段时间后文字消失
-                //给一个设置文字消失的间隔
-                // console.log(this.last_item)
-                // console.log(this.cur_lists_length)
-                // if(this.last_item !== item.value.template){
-                //     this.addCurLists({index:this.count ,temp: item.value.template})
+                //如果与上一个模板内容相同，则不插入
+                let temp = item.value.template
+                // if(!this.last_item||this.last_item.temp !== temp){
+                //     console.log(this.last_item)
+                //     this.addCurLists({index:this.count ,temp: temp})
                 // }
-                this.addCurLists({index:this.count ,temp: item.value.template})
-                
+                this.addCurLists({index:this.count ,temp: temp})
                 hyExt.logger.info('有新弹幕', barrageInfo)  
             }).then(() => {
                 item.disabled=false
-                
-                this.setBoardExist({exist: true})
-                //gotoMain
-                this.gotoMain()
+                this.$nextTick(()=>{
+                    this.gotoMain()
+                })
                 this.$message.success('监听已打开，请尽量保持白板页面', 1)
                 hyExt.logger.info('监听成功')
             }).catch(err => {
@@ -190,6 +191,7 @@ export default {
         },
         startListenGift(item){
             item.disabled=true
+            this.stopGift = false
             this.changePreview({isPreview: false})
             this.addCurTemps({title:item.value.title})
             let keyWord=item.value.keyWord
@@ -205,17 +207,18 @@ export default {
                 }else{
                     template = `感谢${sendNick}送的${sendItemComboHits}组${itemName}！${item.value.template}`
                 }
-                // console.log(this.last_item)
-                // if(this.last_item !== template){
-                //     this.addCurLists({index:this.count,temp: template})
+                //如果与上一个模板内容相同，则不插入
+                // if(!this.last_item||this.last_item.temp !== template){
+                //     console.log(this.last_item)
+                //     this.addCurLists({index:this.count ,temp: template})
                 // }
-                this.addCurLists({index:this.count,temp: template})
-
+                this.addCurLists({index:this.count ,temp: template})
             }).then(() => {
                 item.disabled=false
                 //gotoMain
-                this.setBoardExist({exist: true})
-                this.gotoMain()
+                this.$nextTick(()=>{
+                    this.gotoMain()
+                })
                 this.$message.success('监听已打开，请尽量保持白板页面', 1)
                 hyExt.logger.info('监听成功')
             }).catch(err => {
@@ -224,33 +227,49 @@ export default {
         },
         //写在vuex的计算属性里
         stopListenGift(item){
-            this.$message.warning('监听已关闭')
-            hyExt.context.offGiftChange()
-            this.cleanCurLists()
-            this.removeCurTemps({title:item.value.title})
-            this.changePreview({isPreview: true})
+            this.isStopFinish = false
+            hyExt.context.offGiftChange().then(()=>{
+                this.$message.warning('监听已关闭')
+                this.cleanCurLists()
+                this.removeCurTemps({title:item.value.title})
+                this.stopGift = true
+                console.log(this.stopDanmu+"danmu",this.stopGift+"liwu")
+                if(this.stopGift && this.stopDanmu){
+                    this.changePreview({isPreview: true})
+                    this.removeZone()
+                }
+                this.$nextTick(()=>{
+                    this.isStopFinish = true
+                })
+            })
             //不一定remove
-            this.removeZone()
         },
         stopListen(item){
             //取消某个关键词监听
-            this.$message.warning('监听已关闭')
-            hyExt.context.offBarrageChange()
-            this.cleanCurLists()
-            this.removeCurTemps({title:item.value.title})
-            this.changePreview({isPreview: true})
+            this.isStopFinish = false
+            hyExt.context.offBarrageChange().then(()=>{
+                this.$message.warning('监听已关闭')
+                this.cleanCurLists()
+                this.removeCurTemps({title:item.value.title})
+                this.stopDanmu = true
+                console.log(this.stopDanmu+"danmu",this.stopGift+"liwu")
+                if(this.stopGift && this.stopDanmu){
+                    this.changePreview({isPreview: true})
+                    this.removeZone()
+                }
+                this.$nextTick(()=>{
+                    this.isStopFinish = true
+                })
+            })
             //不一定remove
-            this.removeZone()
         },
         removeZone(){
-            if(this.boardExist){
-                hyExt.stream.removeZone().then(() => {
-                    hyExt.logger.info('删除白板成功')
-                    this.setBoardExist({exist: false})
-                }).catch(err => {
-                    hyExt.logger.warn('删除白板失败', err)
-                })
-            }
+            hyExt.stream.removeZone().then(() => {
+                hyExt.logger.info('删除白板成功')
+                this.setBoardExist({exist: false})
+            }).catch(err => {
+                hyExt.logger.warn('删除白板失败', err)
+            })
         },
     }
 }

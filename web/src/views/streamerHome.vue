@@ -1,22 +1,5 @@
 <template>
     <div class="streamerHome">
-        <!-- <transition name="button-ani" enter-active-class="animatied zoomIn">
-            <div>
-                <div class="button" @click="goToList">查看模板列表</div>
-            </div>
-        </transition> -->
-        <!-- <div v-if="isEmpty" class="intro-wrapper">
-            <transition-group name="fade-ani" tag="div" enter-active-class="animated fadeInDown"  leave-active-class="animated fadeOutRight" @after-enter="addAnim">
-                <div v-for="ele in intro_data" :key="ele.id" :class="[introType,anim]" :style="delay[ele.id]">
-                    {{ele.msg}}
-                </div>
-            </transition-group>
-        </div> -->
-        <!-- <transition name="button-ani" enter-active-class="animatied zoomIn">
-            <div>
-                <div class="button" @click="goToAdd">创 建 模 板</div>
-            </div>
-        </transition> -->
         <div class="button" @click="goToList">查看模板列表</div>
         <div class="button" @click="goToAdd">创建弹幕模板</div>
         <div class="button" @click="goToGift">创建礼物模板</div>
@@ -28,45 +11,6 @@
 export default {
     data(){
         return {
-            isEmpty:true,
-            show:false,
-            introType:'',
-            anim:'',
-            delay:[
-                {"animation-delay": "0s"},
-                {"animation-delay": "0.5s"},
-                {"animation-delay": "1s"},
-                {"animation-delay": "1.5s"},
-                {"animation-delay": "2s"},
-                {"animation-delay": "2.5s"}
-            ],
-            intro_data:[],
-            intro_msg:[
-                {
-                    msg:"欢迎使用弹幕tools",
-                    id:0
-                },
-                {
-                    msg:"您可以通过创建模板，",
-                    id:1
-                },
-                {
-                    msg:"添加您想监听的弹幕关键字，",
-                    id:2
-                },
-                {
-                    msg:"填入您想回应的信息，",
-                    id:3
-                },
-                {
-                    msg:"弹幕tools就可以帮助您在直播界面回应弹幕哦",
-                    id:4
-                },
-                {
-                    msg:"快来创建第一个模板来体验吧！",
-                    id:5
-                }
-            ],
             
         }
     },
@@ -74,10 +18,6 @@ export default {
         
     },
     methods:{
-        addAnim(el,done){
-            el.style.animationDelay="0s"
-            el.style.animation="upDown 3s infinite"
-        },
         goToAdd(){
             this.$router.push('/add')
         },
@@ -88,23 +28,6 @@ export default {
             this.$router.push('/addGift')
         },
     },
-    mounted(){
-        hyExt.storage.getKeys().then(keys => {
-                hyExt.logger.info('获取成功', keys)
-                if(keys.length===0){
-                    this.show=true
-                    this.intro_data=this.intro_msg
-                    this.introType='intro'
-                }else{
-                    this.show=true
-                    this.isEmpty=false
-                    this.introType='templates'
-                    //初始化lists放在这里
-                }
-            }).catch(err => {
-                hyExt.logger.warn('获取失败', err)
-            })
-        },
 }
 </script>
 <style lang="scss">

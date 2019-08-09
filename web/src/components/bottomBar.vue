@@ -17,7 +17,7 @@ export default {
    },
    methods: {
        goHome(){
-           this.$router.push('/')
+            this.$router.push('/')
        },
        gotoList(){
            this.$router.push('/list')

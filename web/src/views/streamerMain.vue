@@ -7,13 +7,15 @@
                         <a-col :span="9">
                             <div> 当前模板：</div>
                         </a-col>
-                        <template v-if="cur_temps.length === 0"><a-col :span="15">无</a-col></template>
+                        <template v-if="cur_temps.length === 0"><a-col :span="12">无</a-col></template>
                         <template v-else>
-                            <transition-group name="title" enter-active-class="animated fadeInDown" leave-active-class="animated fadeOutDown">
-                                <a-col :span="15" v-for="(el,index) in cur_temps" :key="el" v-show="index===currentIndex" style="position:absolute;left:37.5%;">
-                                    <div>{{el}}</div>
-                                </a-col>
-                            </transition-group>
+                            <a-col :span="12">
+                                <transition-group name="title" enter-active-class="animated fadeInDown" leave-active-class="animated fadeOutDown">
+                                    <div  v-for="(el,index) in cur_temps" :key="el" v-show="index===currentIndex" style="position:absolute;left:37.5%;">
+                                        <div>{{el}}</div>
+                                    </div>
+                                </transition-group>
+                            </a-col>
                         </template>
                     </a-row>
                 </div>
@@ -79,14 +81,17 @@ export default {
         }
     },
     mounted(){
-        // let isOn=false
-         //获取模板数据，拼成要用的样子
          this.$nextTick(()=>{
+             console.log(this.isPreview)
+             if(!this.isPreview && !this.boardExist){
+                 //监听模式并且白板没有创建
+                 this.createZone()
+                 this.setBoardExist({exist: true})
+             }
              if(!this.isPreview&&this.cur_lists_length==0){
                  //监听模式并且第一次进来
                 this.end = 1
                 this.changeEnd({end:1})
-                this.createZone()
              }else if(!this.isPreview&&this.cur_lists_length > 0){
                  //监听模式并且不是第一次进来
                 this.start = this.start_s
@@ -128,7 +133,8 @@ export default {
     methods:{
         ...mapMutations([
             'changeStart',
-            'changeEnd'
+            'changeEnd',
+            'setBoardExist',
         ]),
         autoPlay(){
             this.currentIndex = (this.currentIndex+1)%this.cur_temps.length
@@ -223,10 +229,11 @@ export default {
             .current-templates{
                 .ant-row{
                     padding: 6px 0;
-                    .ant-col-9{
+                    .ant-col-9 {
                         padding: 6px 0;
                     }
-                    .ant-col-15{
+                    .ant-col-12 {
+                        height: 33px;
                         padding: 6px 0;
                         background-color: #b9daea82;
                         border-radius: 14px;

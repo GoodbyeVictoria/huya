@@ -20,6 +20,13 @@ const store=new Vuex.Store({
         lists_length:state=>state.lists.length,
         cur_lists_length:state=>state.cur_lists.length,
         cur_temps_length:state=>state.cur_temps.length,
+        last_item:(state,getters) => {
+            if(getters.cur_lists_length > 0) {
+                return state.cur_lists[getters.cur_lists_length - 1]
+            }else {
+                return null
+            }
+        },
     },
     mutations:{
         changeStart(state,payload){
