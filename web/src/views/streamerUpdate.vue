@@ -1,6 +1,5 @@
 <template>
     <div class="streamerMain">
-        <back :path="back_path" content="返回模板列表"></back>
         <div class="form-wrapper">
             <a-form :form="form" @submit="handleSubmit" class="form">
                 <a-form-item 
@@ -50,7 +49,6 @@
 </template>
 
 <script>
-import back from './../components/back'
 
 export default {
     props:['item_key'],
@@ -64,11 +62,9 @@ export default {
             disabled:false,
             template:'',
             cur_item:'',
-            back_path:'list'
         }
     },
     components:{
-        back
     },
     mounted(){
         this.cur_item=this.$store.state.cur_item
@@ -77,7 +73,7 @@ export default {
     methods:{
         goBack(){
             //yonghistory
-            this.$router.push(`/${this.back_path}`)
+            this.$router.go(-1)
         },
         handleSubmit(e){
             e.preventDefault()
@@ -99,7 +95,8 @@ export default {
                             }else if(this.title_valid&&!err){
                                 let value=JSON.stringify(values)
                                 hyExt.storage.setItem(this.item_key, value).then(() => {
-                                    hyExt.logger.info('设置成功', values.keyWord)
+                                    hyExt.logger.info('设置成功')
+                                    this.$store.commit('updateItemValue',{key:this.item_key,value:values})
                                     this.is_finish=true
                                     this.disabled=false
                                     this.$message.success('修改成功', 1).then(this.goBack)
@@ -119,7 +116,7 @@ export default {
     }
 }
 </script>
-<style lang="scss">
+<style lang="scss" scoped>
 @import "./../assets/scss/partial/flex";
 
  .streamerMain{
@@ -127,6 +124,26 @@ export default {
     @include flex-direction(column);
     width: 100%;
     height: 100%;
+    .ant-btn-primary {
+        width:30%;
+    }
+    .textarea {
+        max-width: 100%;
+        height: auto;
+        vertical-align: bottom;
+        transition: all 0.3s, height 0s;
+        min-height: 32px;
+    }
+    .form-wrapper {
+        padding: 23px 28px;
+        background-color: #fafafa99;
+        border-radius: 10px;
+        width: 90%;
+        margin-top: -8%;
+        .ant-row:first-child{
+            margin-bottom:10px;
+        }
+    }
  }
 .alert{
      position:fixed;

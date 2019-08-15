@@ -1,12 +1,11 @@
 <template>
     <div class="streamerList">
-        <!-- <back :path="back_path" content="返回主页"></back> -->
-        <div v-show="loading" class="loading">
+        <div v-show="(lists.length <= 0) && !checkIsEmpty()" class="loading">
             <a-spin size="large"></a-spin>
         </div>
-        <div class="list-wrapper">
+        <div class="list-wrapper" v-if="lists.length > 0">
             <transition-group name="list-tran" enter-active-class="animated fadeInUp fast" leave-active-class="animated fadeOutUp fast">
-                <div :key="item.key" v-for="item in lists" class="item-wrapper">
+                <div :key="item.key" v-for="item in lists" class="item-wrapper" :class="{giftWrapper: item.value.isGift}">
                     <a-row>
                         <a-col :span="16"><div>{{item.value.title}}</div></a-col>
                         <a-col :span="6" :offset="2">
@@ -16,7 +15,7 @@
                         </a-col>
                     </a-row>
                     <a-row>
-                        <a-col :span="6"><div>{{item.value.keyWord}}</div></a-col>
+                        <a-col :span="24"><div>{{item.value.keyWord}}</div></a-col>
                     </a-row>
                     <a-row>
                         <a-col :span="6">
@@ -36,107 +35,241 @@
                 </div>
             </transition-group>
         </div>
-        <!-- <bottomBar></bottomBar> -->
+        <div v-else class="attention">
+            <div>
+                目前还没有模板哦！
+            </div>
+            <div>
+                快去点击创建模板吧！
+            </div>
+        </div>
     </div>
 </template>
 
 <script>
-import back from './../components/back'
-import bottomBar from './../components/bottomBar'
+import { mapState,mapActions,mapMutations,mapGetters } from 'vuex'
 
 export default {
     data(){
         return{
-            lists:[],
-            back_path:''
+            count:0,
+            stopDanmu:true,
+            stopGift:true,
+            isStopFinish:true,
         }
     },
     created(){
-        this.loading=true
-        // let isOn=false
         let isOn=true
          //获取模板数据，拼成要用的样子
-        hyExt.storage.getKeys().then(keys=>{
-            hyExt.logger.info('获取成功', keys)
-            keys.forEach(ele=>{
-                let obj={key:ele,checked:false,disabled:!isOn,show:false}
-                hyExt.storage.getItem(ele).then(value => {
-                    hyExt.logger.info('获取成功', value)
-                    let data=JSON.parse(value)
-                    obj.value=data
-                    this.lists.push(obj)
-                    
-                }).catch(err => {
-                    hyExt.logger.warn('获取失败', err)
-                })
-            })
-            this.loading=false;
-            this.$store.commit('setLists',{lists:this.lists})
-        }).catch(err=>{
-            hyExt.logger.warn('获取失败', err)
-        })
+         //从vuex获取，每次更改状态要更新到vuex
+         //vuex里数据为空则从缓存获取（说明是第一次）
+        if(this.lists.length==0){
+            //初始化
+            this.getLists()
+        }
+    },
+    beforeRouteLeave (to, from, next) {
+        if(this.isStopFinish){
+            next()
+        }
     },
     computed:{
-        
+        on_count(){
+            return this.lists.reduce((acc,cur)=>{
+                        if(cur.checked&&!cur.value.isGift){
+                            acc++
+                        }
+                        return acc
+                    },0)
+        },
+        on_count_gift(){
+            return this.lists.reduce((acc,cur)=>{
+                        if(cur.checked&&cur.value.isGift){
+                            acc++
+                        }
+                        return acc
+                    },0)
+        },
+        ...mapState([
+            'lists',
+            'boardExist',
+            'cur_lists'
+        ]),
+        ...mapGetters([
+            'cur_lists_length',
+            'last_item',
+        ]),
     },
     components:{
-        back,bottomBar
     },
     methods:{
+        ...mapMutations([
+            'setBoardExist',
+            'addCurLists',
+            'cleanCurLists',
+            'changePreview',
+            'addCurTemps',
+            'removeCurTemps',
+        ]),
+        ...mapActions([
+            'getLists',
+            'removeItem',
+            'checkIsEmpty',
+        ]),
         onChange(item){
-            if(this.on_count>=1&&!item.checked){
-                this.$message.warning('只能监听一个哦')
-            }else{
-                item.checked=!item.checked
-                this.listen_count()
-                if(item.checked){
-                    this.startListen(item)
+            if(item.value.isGift){
+                if(this.on_count_gift>=1&&!item.checked){
+                    this.$message.warning('只能监听一个礼物模板哦')
                 }else{
-                    this.stopListen()
-                    //删掉白板
+                    item.checked=!item.checked
+                    if(item.checked){
+                        console.log('jianting')
+                        this.startListenGift(item)
+                    }else{
+                        this.stopListenGift(item)
+                        //删掉白板
+                    }
+                }
+            }else{
+                if(this.on_count>=1&&!item.checked){
+                    this.$message.warning('只能监听一个弹幕模板哦')
+                }else{
+                    item.checked=!item.checked
+                    if(item.checked){
+                        this.startListen(item)
+                    }else{
+                        this.stopListen(item)
+                        //删掉白板
+                    }
                 }
             }
         },
-        listen_count(){
-            this.on_count = this.lists.reduce((acc,cur)=>{
-                if(cur.checked){
-                    acc++
-                }
-                return acc
-            },0)
+        goToUpdate(item){
+            this.$store.commit('getItem',{item:item})
+            if(item.value.isGift){
+                this.$router.push(`/updateGift/${item.key}`)
+            }else{
+                this.$router.push(`/update/${item.key}`)
+            }
+            
+        },
+        gotoMain(){
+            this.$router.push(`/main`)
+        },
+        removeItem(item){
+            this.removeItem(item)
         },
         startListen(item){
-            this.current_template = item.value.template
-            this.current_item = item
             item.disabled=true
-            this.isPreview = false
+            this.stopDanmu = false
+            this.changePreview({isPreview: false})
+            this.addCurTemps({title:item.value.title})
             let keyWord=item.value.keyWord
-            this.createZone(item)
-            //刷新白板
             hyExt.context.onBarrageChange({
                 content:keyWord
             }, barrageInfo => {
                 console.log(barrageInfo)
-                //显示白板文字
-                //一段时间后文字消失
-                //给一个设置文字消失的间隔
-                this.isActive = true
-                // this.stopListen()
-                let delay = this.duration * 1000
-                setTimeout(() => {
-                    this.isActive = false
-                }, delay);
-                hyExt.logger.info('有新弹幕', barrageInfo)
+                this.count = Math.floor(Date.now() / 1000);
+                //如果与上一个模板内容相同，则不插入
+                let temp = item.value.template
+                // if(!this.last_item||this.last_item.temp !== temp){
+                //     console.log(this.last_item)
+                //     this.addCurLists({index:this.count ,temp: temp})
+                // }
+                this.addCurLists({index:this.count ,temp: temp})
+                hyExt.logger.info('有新弹幕', barrageInfo)  
             }).then(() => {
                 item.disabled=false
-                this.$message.success('开始监听', 1)
+                this.$nextTick(()=>{
+                    this.gotoMain()
+                })
+                this.$message.success('监听已打开，请尽量保持白板页面', 1)
                 hyExt.logger.info('监听成功')
             }).catch(err => {
                 hyExt.logger.warn('监听失败', err)
             })
         },
-        gotoStart(item){
-            this.$router.push('/main')
+        startListenGift(item){
+            item.disabled=true
+            this.stopGift = false
+            this.changePreview({isPreview: false})
+            this.addCurTemps({title:item.value.title})
+            let keyWord=item.value.keyWord
+            hyExt.context.onGiftChange({
+                itemName: keyWord
+            }, giftInfo => {
+                hyExt.logger.info('有新礼物', giftInfo)
+                this.count = Math.floor(Date.now() / 1000);
+                let { sendNick, sendItemCount, sendItemComboHits, itemName } = giftInfo
+                let template = ``
+                if(sendItemComboHits == 0){
+                    template = `感谢${sendNick}送的${sendItemCount}个${itemName}！${item.value.template}`
+                }else{
+                    template = `感谢${sendNick}送的${sendItemComboHits}组${itemName}！${item.value.template}`
+                }
+                //如果与上一个模板内容相同，则不插入
+                // if(!this.last_item||this.last_item.temp !== template){
+                //     console.log(this.last_item)
+                //     this.addCurLists({index:this.count ,temp: template})
+                // }
+                this.addCurLists({index:this.count ,temp: template})
+            }).then(() => {
+                item.disabled=false
+                //gotoMain
+                this.$nextTick(()=>{
+                    this.gotoMain()
+                })
+                this.$message.success('监听已打开，请尽量保持白板页面', 1)
+                hyExt.logger.info('监听成功')
+            }).catch(err => {
+                hyExt.logger.warn('监听失败', err)
+            })
+        },
+        //写在vuex的计算属性里
+        stopListenGift(item){
+            this.isStopFinish = false
+            hyExt.context.offGiftChange().then(()=>{
+                this.$message.warning('监听已关闭')
+                this.cleanCurLists()
+                this.removeCurTemps({title:item.value.title})
+                this.stopGift = true
+                console.log(this.stopDanmu+"danmu",this.stopGift+"liwu")
+                if(this.stopGift && this.stopDanmu){
+                    this.changePreview({isPreview: true})
+                    this.removeZone()
+                }
+                this.$nextTick(()=>{
+                    this.isStopFinish = true
+                })
+            })
+            //不一定remove
+        },
+        stopListen(item){
+            //取消某个关键词监听
+            this.isStopFinish = false
+            hyExt.context.offBarrageChange().then(()=>{
+                this.$message.warning('监听已关闭')
+                this.cleanCurLists()
+                this.removeCurTemps({title:item.value.title})
+                this.stopDanmu = true
+                console.log(this.stopDanmu+"danmu",this.stopGift+"liwu")
+                if(this.stopGift && this.stopDanmu){
+                    this.changePreview({isPreview: true})
+                    this.removeZone()
+                }
+                this.$nextTick(()=>{
+                    this.isStopFinish = true
+                })
+            })
+            //不一定remove
+        },
+        removeZone(){
+            hyExt.stream.removeZone().then(() => {
+                hyExt.logger.info('删除白板成功')
+                this.setBoardExist({exist: false})
+            }).catch(err => {
+                hyExt.logger.warn('删除白板失败', err)
+            })
         },
     }
 }
@@ -168,7 +301,7 @@ export default {
                 border: 0;
             }
             &:nth-child(1){
-                font-size:21px;
+                font-size:19px;
                 letter-spacing: 3px;
                 font-weight:500;
             }
@@ -189,12 +322,15 @@ export default {
             border-radius: 17px;
             box-shadow: 1px 1px 6px 1px #0000001f;
             transform:scale(1.0);
-            transition:all 0.5s;
+            transition:all 0.2s;
             &:hover{
                 transform:scale(1.04);
-                transition:all 0.5s;
+                transition:all 0.2s;
                 cursor:pointer;
             }
+        }
+        .giftWrapper{
+            background: rgba(151, 200, 246, 0.2);
         }
     }
     ::-webkit-scrollbar {
@@ -216,6 +352,19 @@ export default {
     cursor:pointer;
     color:brown;
     text-decoration: underline;
+}
+.attention {
+    @include flexCenter;
+    @include flex-direction(column);
+    width: 63%;
+    height: 22%;
+    background-color: #fafafa94;
+    box-shadow: 1px 1px 6px 1px #0000001f;
+    border-radius: 10px;
+    div {
+        margin: 5%;
+        letter-spacing: 1px;
+    }
 }
 
 </style>

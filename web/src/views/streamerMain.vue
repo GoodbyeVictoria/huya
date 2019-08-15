@@ -1,29 +1,24 @@
 <template>
     <div class="streamerMain">
-        <div v-show="loading" class="loading">
-            <a-spin size="large"></a-spin>
-        </div>
-        <div class="list-wrapper">
-            <transition name="list-tran" enter-active-class="animated fadeInLeft fast" leave-active-class="animated fadeOutRight fast" mode="out-in">
-                <template v-for="item in showLists(lists,start,end)">
-                    <div :key="item.key" class="item-wrapper">
-                        <a-row>
-                            <a-col :span="16"><div>{{item.value.title}}</div></a-col>
-                            <a-col :span="6" :offset="2">
-                                <div style="margin-bottom:4px;text-align:right;">
-                                    <a-switch :checked="item.checked" :disabled="item.disabled" @change='onChange(item)'  />
-                                </div>
-                            </a-col>
-                        </a-row>
-                        <a-row>
-                            <a-col :span="6"><div>{{item.value.keyWord}}</div></a-col>
-                        </a-row>
-                    </div>
-                </template>
-            </transition>
-        </div>
         <div class="preview">
             <div class="edit-zone">
+                <div class="current-templates">
+                    <a-row style="position:relative;">
+                        <a-col :span="9">
+                            <div> 当前模板：</div>
+                        </a-col>
+                        <template v-if="cur_temps.length === 0"><a-col :span="12">无</a-col></template>
+                        <template v-else>
+                            <a-col :span="12">
+                                <transition-group name="title" enter-active-class="animated fadeInDown" leave-active-class="animated fadeOutDown">
+                                    <div  v-for="(el,index) in cur_temps" :key="el" v-show="index===currentIndex" style="position:absolute;left:37.5%;">
+                                        <div>{{el}}</div>
+                                    </div>
+                                </transition-group>
+                            </a-col>
+                        </template>
+                    </a-row>
+                </div>
                 <div class="zone-size">
                     <a-row>
                         <a-col :span="6">
@@ -46,135 +41,117 @@
                             <label>模板停留时间</label>
                         </a-col>
                         <a-col :span="10">
-                            <a-input-number :min="1" :max="20" v-model="duration" :defaultValue="8" :disabled="!isPreview" size="small" /> 秒
+                            <a-input-number :min="1" :max="20" v-model="duration" :defaultValue="8" :disabled="!isPreview" size="small" @change="changeDuration" /> 秒
                         </a-col>
                     </a-row>
                 </div>
             </div>
             <div class="zone" id="zone" ref="zone" :style="{width:width + '%',height:height + '%',transform:leftOffset}">
-                <transition name="zone" enter-active-class="animated fadeInLeft" leave-active-class="animated fadeOutRight">
-                    <div class="content" v-show="isActive||isPreview">
-                        {{current_template}}
-                    </div>
-                </transition>
+                <div v-if="isPreview" class="content-pre">{{ default_temp }}</div>
+                <div v-else>
+                    <transition name="zone-tra" enter-active-class="animated fadeInLeft" leave-active-class="animated fadeOutRight" @after-enter="afterEnter" mode="out-in">
+                        <div class="content"  v-for="item in showlist(cur_lists,start,end)" :key="item.index">
+                            {{ item.temp }}
+                        </div>
+                    </transition>
+                </div>
             </div>
         </div>
-        
     </div>
 </template>
 
 <script>
-import back from './../components/back'
+import { mapState,mapGetters,mapMutations } from 'vuex'
+
 
 export default {
     data(){
         return{
-            lists:[],
-            on_count:0,
-            loading:false,
-            current_template:'预览区域',
-            current_item:'',
             width:60,
             height:27.6,
             offsetX:-50,
             offsetY:-20,
-            isActive:false,
-            isPreview:true,
             duration:8,
+            default_temp:'预览区域',
+            currentIndex:'',
+            start:0,
+            end:0,
+            currentIndex:0,
+            timer:''
         }
     },
-    created(){
-        this.loading=true
-        // let isOn=false
-        let isOn=true
-         //获取模板数据，拼成要用的样子
-        hyExt.storage.getKeys().then(keys=>{
-            hyExt.logger.info('获取成功', keys)
-            keys.forEach(ele=>{
-                let obj={key:ele,checked:false,disabled:!isOn,show:false}
-                hyExt.storage.getItem(ele).then(value => {
-                    hyExt.logger.info('获取成功', value)
-                    let data=JSON.parse(value)
-                    obj.value=data
-                    this.lists.push(obj)
-                    
-                }).catch(err => {
-                    hyExt.logger.warn('获取失败', err)
-                })
-            })
-            this.loading=false;
-            this.$store.commit('setLists',{lists:this.lists})
-        }).catch(err=>{
-            hyExt.logger.warn('获取失败', err)
-        })
+    mounted(){
+         this.$nextTick(()=>{
+             console.log(this.isPreview)
+             if(!this.isPreview && !this.boardExist){
+                 //监听模式并且白板没有创建
+                 this.createZone()
+                 this.setBoardExist({exist: true})
+             }
+             if(!this.isPreview&&this.cur_lists_length==0){
+                 //监听模式并且第一次进来
+                this.end = 1
+                this.changeEnd({end:1})
+             }else if(!this.isPreview&&this.cur_lists_length > 0){
+                 //监听模式并且不是第一次进来
+                this.start = this.start_s
+                this.end = this.end_s
+             }
+             this.timer = setInterval(() => {
+                 this.autoPlay()
+             }, 3000);
+             console.log(this.cur_lists_length,this.end)
+         })
+    },
+    destroyed(){
+        clearInterval(this.timer)
     },
     computed:{
-        show_lists(){
-            return this.lists.slice(0,this.pageSize)
-        },
-        total(){
-            return this.lists.length
-        },
         leftOffset(){
             return `translate(${this.offsetX}%,${this.offsetY}%)`
-        }
+        },
+        ...mapState([
+            'boardExist',
+            'cur_lists',
+            'isPreview',
+            'cur_temps'
+        ]),
+        ...mapState({
+            start_s:'start',
+            end_s:'end'
+        }),
+        ...mapGetters([
+            'cur_lists_length',
+            'cur_temps_length'
+        ]),
+        delay(){
+            return this.duration * 1000
+        },
     },
     components:{
-        back
     },
     methods:{
-        onChange(item){
-            if(this.on_count>=1&&!item.checked){
-                this.$message.warning('只能监听一个哦')
-            }else{
-                item.checked=!item.checked
-                this.listen_count()
-                if(item.checked){
-                    this.startListen(item)
-                }else{
-                    this.stopListen()
-                    //删掉白板
-                }
-            }
+        ...mapMutations([
+            'changeStart',
+            'changeEnd',
+            'setBoardExist',
+        ]),
+        autoPlay(){
+            this.currentIndex = (this.currentIndex+1)%this.cur_temps.length
         },
-        listen_count(){
-            this.on_count = this.lists.reduce((acc,cur)=>{
-                if(cur.checked){
-                    acc++
-                }
-                return acc
-            },0)
+        showlist(list,start,end){
+            return this.cur_lists.slice(start,end)
         },
-        startListen(item){
-            //其实可以不止监听关键词。。。
-            this.current_template = item.value.template
-            this.current_item = item
-            item.disabled=true
-            this.isPreview = false
-            let keyWord=item.value.keyWord
-            this.createZone(item)
-            //刷新白板
-            hyExt.context.onBarrageChange({
-                content:keyWord
-            }, barrageInfo => {
-                console.log(barrageInfo)
-                //显示白板文字
-                //一段时间后文字消失
-                //给一个设置文字消失的间隔
-                this.isActive = true
-                // this.stopListen()
-                let delay = this.duration * 1000
-                setTimeout(() => {
-                    this.isActive = false
-                }, delay);
-                hyExt.logger.info('有新弹幕', barrageInfo)
-            }).then(() => {
-                item.disabled=false
-                this.$message.success('开始监听', 1)
-                hyExt.logger.info('监听成功')
-            }).catch(err => {
-                hyExt.logger.warn('监听失败', err)
-            })
+        afterEnter(){
+            setTimeout(()=>{
+                this.changeStart({start:this.start_s+1})
+                this.changeEnd({end:this.end_s+1})
+                this.start = (this.start+1)
+                this.end = (this.end+1)
+            },this.delay)
+        },
+        changeDuration(value){
+            this.setDuration({duration:value})
         },
         createZone(item){
             //停止监听弹幕
@@ -184,15 +161,6 @@ export default {
                 hyExt.logger.warn('创建白板失败', err)
             })
         },
-        stopListen(){
-            //取消某个关键词监听
-            this.current_item = ''
-            this.isPreview = true
-            this.isActive = false
-            this.$message.warning('监听已关闭')
-            hyExt.context.offBarrageChange()
-            this.removeZone()
-        },
         removeZone(callback){
             hyExt.stream.removeZone().then(() => {
                 hyExt.logger.info('删除白板成功')
@@ -201,24 +169,6 @@ export default {
                 hyExt.logger.warn('删除白板失败', err)
             })
         },
-        goToUpdate(item){
-            this.$store.commit('getItem',{item:item})
-            this.$router.push(`/update/${item.key}`)
-        },
-        removeItem(item){
-            let pos=this.lists.map(ele=>ele.key).indexOf(item.key)
-            console.log(pos)
-            this.lists.splice(pos,1)
-            //removeItem
-            hyExt.storage.removeItem(item.key).then(()=>{
-                hyExt.logger.info('删除item成功')
-            }).catch(err=>{
-                hyExt.logger.warn('删除item失败', err)
-            })
-        },
-        showLists(lists,start,end){
-            return lists.slice(start,end)
-        },
         changeWidth(value){
             this.width = value*9.3
         },
@@ -226,7 +176,7 @@ export default {
             this.height = value*4.6
         },
         refreshZone(){
-            if(this.current_item){
+            if(this.boardExist){
                 this.removeZone(this.createZone)
             }
         }
@@ -242,62 +192,30 @@ export default {
     @include flex-direction(column);
     width: 100%;
     height: 100%;
-    .list-wrapper {
-        position: fixed;
-        @include flexCenter;
-        width:95%;
-        top:9%;
-        font-size:17px;
-        .ant-row {
-            margin:-1px 0 -1px 0;
-            padding:3px 0px;
-            letter-spacing: 2px;
-            div{
-                background: transparent;
-                border: 0;
-            }
-            &:nth-child(1){
-                font-size:21px;
-                letter-spacing: 3px;
-                font-weight:500;
-            }
-            &:nth-child(2){
-                font-size:15px
-            }
-            &:nth-child(3){
-                font-size:15px
-            }
-        }
-        .item-wrapper {
-            text-align: left;
-            width: 80%;
-            margin: 0 auto;
-            padding: 10px 17px;
-            background: #fafafa94;
-            border-radius: 17px;
-            box-shadow: 1px 1px 6px 1px #0000001f;
-        }
-    }
     .preview {
         position: fixed;
         width: 93%;
-        height: 63%;
-        top: 27%;
-        // background: #fafafa94;
-        border-radius: 17px;
+        height: 83%;
+        top: 7%;
         box-shadow: 1px 1px 6px 1px #0000001f;
         .zone {
             position:fixed;
             background-color: #e9f5ff80;
             left:50%;
-            top: 62%;
+            top: 53%;
+            padding: 10px;
             .content {
+                position:relative;
+                top: 46px;
+            }
+            .content-pre {
                 position: relative;
                 top: 40%;
             }
         }
         .edit-zone {
             padding: 0 0 5px 0;
+            margin: 20px 0 34px 0;
             .zone-size {
                 label {
                     display: inline-block;
@@ -308,13 +226,23 @@ export default {
                     width:65px;
                 }
             }
+            .current-templates{
+                .ant-row{
+                    padding: 6px 0;
+                    .ant-col-9 {
+                        padding: 6px 0;
+                    }
+                    .ant-col-12 {
+                        height: 33px;
+                        padding: 6px 0;
+                        background-color: #b9daea82;
+                        border-radius: 14px;
+                    }
+                }
+            }
         }
     }
 }
-.loading{
-    position:fixed;
-}
-
 </style>
 
 

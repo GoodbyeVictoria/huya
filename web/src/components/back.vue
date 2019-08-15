@@ -15,7 +15,7 @@ export default {
     }
 }
 </script>
-<style scoped>
+<style scoped lang="scss">
 .top {
     font-size: 17px;
     position: fixed;
@@ -24,6 +24,12 @@ export default {
     width: 14%;
     cursor: pointer;
     border-radius: 14px;
+    transform: scale(1.0);
+    transition: all 0.1s;
+    &:hover {
+        transform: scale(1.1);
+        transition: all 0.1s;
+    }
  }
 </style>
 
